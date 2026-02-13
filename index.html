@@ -422,6 +422,42 @@ function render() {
   const closed = getClosed();
   const open = state.items.filter(i => !['done','killed'].includes(i.status));
 
+  // Re-entry check
+  const lastVisit = localStorage.getItem('loop-closer-last-visit');
+  const daysSince = lastVisit ? daysBetween(lastVisit, isoNow()) : 0;
+  localStorage.setItem('loop-closer-last-visit', isoNow());
+
+  if (daysSince >= 3 && state.view === 'dump' && open.length > 0) {
+    const msgs = [
+      { d: 3, text: `${daysSince} days since you were here. That's fine. You're here now. Want to do a quick review?` },
+      { d: 7, text: `It's been ${daysSince} days. The list didn't grow while you were gone — that's the nice thing about a system that waits for you. Pick up where you left off.` },
+      { d: 14, text: `${daysSince} days away. No judgment — avoidance is data, not failure. You probably have some loops worth killing. A review will feel better than you think.` },
+      { d: 30, text: `It's been ${daysSince} days. Half the things on your list probably don't matter anymore, and that's genuinely good news. Let's do a quick cull.` },
+    ];
+    const msg = [...msgs].reverse().find(m => daysSince >= m.d);
+    if (msg) {
+      app.appendChild(h('div', {
+        style: {
+          padding: '14px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0',
+          borderRadius: 10, marginBottom: 16, fontSize: '14px', color: '#065f46', lineHeight: '1.5',
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px',
+        }
+      },
+        h('span', null, msg.text),
+        h('button', {
+          className: 'btn', style: { background: '#059669', color: '#fff', flexShrink: '0', fontSize: '12px', padding: '6px 14px' },
+          onClick: () => {
+            state.reviewQueue = buildReviewQueue();
+            state.reviewIdx = 0;
+            state.coachMsg = '';
+            state.view = 'review';
+            render();
+          }
+        }, '→ Review'),
+      ));
+    }
+  }
+
   // Header
   const header = h('div', { className: 'header' },
     h('div', { className: 'header-top' },
@@ -838,6 +874,36 @@ function renderSettings() {
   const wrap = h('div');
 
   wrap.appendChild(h('h2', { style: { fontSize: '20px', fontWeight: '600', marginBottom: '16px' } }, 'Settings'));
+
+  // Reminders section
+  const reminders = h('div', { className: 'settings-section' });
+  reminders.appendChild(h('h3', null, '⏰ Daily Reminder'));
+  reminders.appendChild(h('p', null, "Set this file as your browser homepage so it's always in your face. For a daily nudge that opens the file automatically, paste one of these into your terminal:"));
+
+  const filePath = window.location.href.startsWith('file://') ? window.location.href.replace('file://', '') : '~/loop-closer.html';
+
+  const macCmd = `# Mac: opens every day at 9am\n(crontab -l 2>/dev/null; echo "0 9 * * * open ${filePath}") | crontab -`;
+  const linuxCmd = `# Linux: opens every day at 9am\n(crontab -l 2>/dev/null; echo "0 9 * * * xdg-open ${filePath}") | crontab -`;
+
+  const codeBlock = h('pre', {
+    style: {
+      background: '#1e1e2e', color: '#cdd6f4', padding: '14px', borderRadius: '8px',
+      fontSize: '12px', fontFamily: "'IBM Plex Mono', monospace", overflowX: 'auto',
+      lineHeight: '1.6', marginBottom: '8px', cursor: 'pointer', position: 'relative',
+    },
+    onClick: (e) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      navigator.clipboard.writeText(isMac ? macCmd : linuxCmd);
+      e.currentTarget.querySelector('.copy-msg').textContent = 'Copied!';
+      setTimeout(() => { e.currentTarget.querySelector('.copy-msg').textContent = 'click to copy'; }, 1500);
+    }
+  },
+    h('span', { className: 'copy-msg', style: { position: 'absolute', top: '6px', right: '10px', fontSize: '11px', color: '#6c7086' } }, 'click to copy'),
+    macCmd + '\n\n' + linuxCmd,
+  );
+  reminders.appendChild(codeBlock);
+  reminders.appendChild(h('p', null, "Or just set it as your browser's startup page — that's honestly the most effective option because it requires zero new habits."));
+  wrap.appendChild(reminders);
 
   // AI section
   const ai = h('div', { className: 'settings-section' });
