@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loop Closer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fafafa;
+    --card: #fff;
+    --border: #e5e7eb;
+    --text: #111827;
+    --muted: #6b7280;
+    --faint: #9ca3af;
+    --indigo: #4f46e5;
+    --indigo-light: #eef2ff;
+    --green: #059669;
+    --green-light: #ecfdf5;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --amber: #d97706;
+    --amber-light: #fffbeb;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .app {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 16px 16px 100px;
+  }
+
+  /* Header */
+  .header { margin-bottom: 20px; }
+  .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+  .header-stats { display: flex; gap: 16px; font-size: 13px; color: var(--muted); }
+  .header-stats .closed { color: var(--green); font-weight: 600; }
+
+  /* Capacity bar */
+  .cap-bar { margin-bottom: 8px; }
+  .cap-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .cap-track { height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
+  .cap-fill { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; }
+
+  /* Nav */
+  .nav { display: flex; gap: 4px; margin-bottom: 20px; background: #f3f4f6; border-radius: 10px; padding: 4px; }
+  .nav button {
+    flex: 1; padding: 8px 4px; background: transparent; border: none;
+    border-radius: 8px; font-size: 13px; font-weight: 400; color: var(--muted);
+    cursor: pointer; font-family: inherit; transition: all 0.15s;
+  }
+  .nav button.active {
+    background: #fff; font-weight: 600; color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* Cards */
+  .card {
+    background: var(--card); border-radius: 12px;
+    border: 1px solid var(--border); padding: 24px;
+  }
+
+  /* Buttons */
+  .btn {
+    border: none; border-radius: 8px; padding: 8px 16px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    font-family: inherit; transition: all 0.15s;
+  }
+  .btn-primary { background: var(--indigo); color: #fff; }
+  .btn-primary:disabled { background: #d1d5db; cursor: default; }
+  .btn-green { background: var(--green); color: #fff; }
+  .btn-kill { background: #fff; color: var(--red); border: 1.5px solid #fca5a5; }
+  .btn-ghost { background: #fff; color: var(--muted); border: 1.5px solid #d1d5db; }
+  .btn-coach { background: #f8f7ff; color: var(--indigo); border: 1.5px solid #c7d2fe; margin-left: auto; }
+  .btn-full { width: 100%; padding: 10px 24px; font-size: 14px; }
+
+  /* Pills */
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill {
+    border-radius: 20px; padding: 6px 16px; font-size: 14px;
+    font-weight: 500; cursor: pointer; font-family: inherit;
+    border: 1.5px solid; transition: all 0.15s;
+  }
+
+  /* Inputs */
+  .input, .textarea {
+    padding: 8px 12px; border: 1.5px solid #d1d5db; border-radius: 8px;
+    font-size: 14px; font-family: inherit; outline: none;
+    transition: border-color 0.15s;
+  }
+  .input:focus, .textarea:focus { border-color: var(--indigo); }
+  .textarea {
+    width: 100%; min-height: 200px; resize: vertical;
+    font-family: 'IBM Plex Mono', monospace; font-size: 15px;
+    line-height: 1.7; background: #fafafa;
+  }
+  .input-full { width: 100%; }
+
+  /* Tags */
+  .tag {
+    font-size: 12px; padding: 2px 10px; border-radius: 12px;
+    display: inline-block;
+  }
+
+  /* Warning banner */
+  .warning {
+    padding: 10px 14px; background: var(--red-light);
+    border: 1px solid #fecaca; border-radius: 8px;
+    margin-bottom: 16px; font-size: 13px; color: #991b1b; line-height: 1.5;
+  }
+
+  /* Coach message */
+  .coach-auto {
+    margin-top: 16px; padding: 14px; background: #f8f7ff;
+    border-radius: 8px; border-left: 3px solid var(--indigo);
+    font-size: 14px; color: #4338ca; line-height: 1.5; font-style: italic;
+  }
+  .coach-ai {
+    margin-top: 12px; padding: 14px; background: var(--green-light);
+    border-radius: 8px; border-left: 3px solid var(--green);
+    font-size: 14px; color: #065f46; line-height: 1.6;
+  }
+
+  /* Progress bar */
+  .progress { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .progress-label { font-size: 13px; color: var(--faint); }
+  .progress-track { height: 3px; flex: 1; margin: 0 16px; background: #f3f4f6; border-radius: 2px; }
+  .progress-fill { height: 100%; background: var(--indigo); border-radius: 2px; transition: width 0.3s; }
+
+  /* List items */
+  .loop-item {
+    padding: 12px 16px; background: #fff; border: 1px solid var(--border);
+    border-radius: 8px; border-left: 3px solid var(--border);
+  }
+  .loop-item.closed { opacity: 0.6; background: #f9fafb; }
+  .loop-item-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  .loop-item-text { font-size: 14px; font-weight: 500; }
+  .loop-item-next { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .loop-item-meta { display: flex; gap: 6px; align-items: center; flex-shrink: 0; margin-left: 12px; }
+  .loop-item-meta span { font-size: 11px; color: var(--faint); }
+  .loop-item-meta .stale { color: var(--amber); }
+
+  /* Empty states */
+  .empty { text-align: center; padding: 40px; }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty h3 { font-size: 18px; font-weight: 600; }
+  .empty p { color: var(--muted); margin-top: 8px; }
+
+  /* Settings */
+  .settings-section { margin-top: 20px; }
+  .settings-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .settings-section p { font-size: 13px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  .settings-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+  .settings-row label { font-size: 13px; color: var(--muted); min-width: 80px; }
+  .settings-row input, .settings-row select { flex: 1; }
+
+  /* Misc */
+  .flex-row { display: flex; gap: 12px; }
+  .flex-row > * { flex: 1; }
+  .mb-4 { margin-bottom: 4px; }
+  .mb-6 { margin-bottom: 6px; }
+  .mb-8 { margin-bottom: 8px; }
+  .mb-12 { margin-bottom: 12px; }
+  .mb-16 { margin-bottom: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-20 { margin-top: 20px; }
+  .label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .quick-hint { color: var(--amber); font-size: 13px; margin-left: 12px; }
+  .gear-btn {
+    background: none; border: none; font-size: 18px; cursor: pointer;
+    padding: 4px; color: var(--muted); transition: color 0.15s;
+  }
+  .gear-btn:hover { color: var(--text); }
+  .triage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .triage-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; line-height: 1.4; }
+  .review-tags { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+
+  .danger-zone { margin-top: 32px; padding-top: 20px; border-top: 1px solid #fecaca; }
+  .danger-zone h3 { color: var(--red); }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+// ─── Constants & Helpers ───
+const CAPACITY = 7;
+const LS_KEY = 'loop-closer-items';
+const LS_STATS = 'loop-closer-stats';
+const LS_SETTINGS = 'loop-closer-settings';
+
+const genId = () => Math.random().toString(36).slice(2, 10);
+const isoNow = () => new Date().toISOString();
+const todayStr = () => new Date().toISOString().split('T')[0];
+const daysBetween = (a, b) => Math.floor((new Date(b) - new Date(a)) / 86400000);
+
+function loadItems() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } }
+function saveItems(items) { localStorage.setItem(LS_KEY, JSON.stringify(items)); }
+function loadStats() { try { return JSON.parse(localStorage.getItem(LS_STATS)) || { opened: 0, closed: 0 }; } catch { return { opened: 0, closed: 0 }; } }
+function saveStats(s) { localStorage.setItem(LS_STATS, JSON.stringify(s)); }
+function loadSettings() {
+  try { return JSON.parse(localStorage.getItem(LS_SETTINGS)) || { apiKey: '', provider: 'anthropic', model: '' }; }
+  catch { return { apiKey: '', provider: 'anthropic', model: '' }; }
+}
+function saveSettings(s) { localStorage.setItem(LS_SETTINGS, JSON.stringify(s)); }
+
+const CATEGORIES = {
+  fire: { icon: '🔥', label: 'Fire', color: '#dc2626', bg: '#fef2f2' },
+  committed: { icon: '🤝', label: 'Committed', color: '#d97706', bg: '#fffbeb' },
+  want: { icon: '🌱', label: 'Want', color: '#059669', bg: '#ecfdf5' },
+  idea: { icon: '💭', label: 'Idea', color: '#6366f1', bg: '#eef2ff' },
+};
+
+// ─── Hardcoded coaching when no AI available ───
+const COACHING = {
+  stale: (item) => `You've looked at "${item.text}" ${item.staleness} times without acting. That's data. Either the next action isn't concrete enough, or you don't actually want to do this. Which is it?`,
+  fire: (item) => {
+    const d = item.deadline ? daysBetween(todayStr(), item.deadline) : null;
+    return d !== null && d <= 2
+      ? `"${item.text}" is due ${d <= 0 ? 'in the past' : 'in ' + d + ' day(s)'}. What is the single next physical action? Not "work on it" — what do you literally do with your hands?`
+      : `You marked "${item.text}" as a fire. Is it still actually burning, or has the urgency passed and inertia is keeping it in the fire lane?`;
+  },
+  quick: (item) => `You estimated "${item.text}" at ${item.estimatedMinutes} minutes. That's shorter than the time you've spent looking at it in reviews. What's really blocking you?`,
+  old: (item) => `"${item.text}" has been open for ${daysBetween(item.createdAt, isoNow())} days. What would actually happen — concretely — if you never did this?`,
+  overcommit: (count) => `You have ${count} active loops against a capacity of ${CAPACITY}. You are over-committed. This is not sustainable. What's the weakest link — the one that would hurt least to kill?`,
+  external: (item) => `You promised "${item.text}" to ${item.promisedTo || 'someone'}. Is this still yours to carry, or can you renegotiate the commitment? Sometimes a 2-minute message saying "I can't do this" closes the loop.`,
+  default: (item) => {
+    const prompts = [
+      'Is this your loop, or did someone else put it on you?',
+      'If you had to explain to a friend why this matters, what would you say?',
+      'What would you tell a friend who had this on their list for this long?',
+      'Are you keeping this because it matters, or because killing it feels like failure?',
+      'What is the very next thing your hands would do to move this forward?',
+      `Imagine it's 3 months from now and "${item.text}" is still on this list. How does that feel?`,
+      'Is the version of this task in your head actually the same as what needs to happen in reality?',
+    ];
+    return prompts[Math.floor(Math.random() * prompts.length)];
+  }
+};
+
+function getAutoCoach(item, activeCount) {
+  if (activeCount > CAPACITY) return COACHING.overcommit(activeCount);
+  if (item.staleness >= 3) return COACHING.stale(item);
+  if (item.category === 'fire') return COACHING.fire(item);
+  if (item.estimatedMinutes && item.estimatedMinutes <= 5) return COACHING.quick(item);
+  if (daysBetween(item.createdAt, isoNow()) > 14) return COACHING.old(item);
+  if (item.externalCommitment) return COACHING.external(item);
+  return COACHING.default(item);
+}
+
+// ─── AI Call (optional) ───
+async function callAI(item, items) {
+  const settings = loadSettings();
+  if (!settings.apiKey) return null;
+
+  const activeCount = items.filter(i => ['active','waiting'].includes(i.status)).length;
+  const context = `The user has an open loop: "${item.text}"
+Category: ${item.category || 'uncategorized'}
+Status: ${item.status}
+Created: ${daysBetween(item.createdAt, isoNow())} days ago
+Staleness (reviews without progress): ${item.staleness}
+Estimated time: ${item.estimatedMinutes ? item.estimatedMinutes + ' minutes' : 'unknown'}
+Next action: ${item.nextAction || 'undefined'}
+Deadline: ${item.deadline || 'none'}
+${item.promisedTo ? 'Promised to: ' + item.promisedTo : ''}
+${item.waitingOn ? 'Waiting on: ' + item.waitingOn : ''}
+
+They currently have ${activeCount} active loops (capacity ~${CAPACITY}).
+
+Ask 1-2 pointed questions to help them decide whether to DO this, DELEGATE it, DEFER it with a specific trigger, or KILL it. Be direct and honest. If they clearly should kill it, say so. If it's genuinely important, help them identify the single next physical action. Don't be nice for the sake of being nice. Be the friend who tells you what you need to hear.`;
+
+  const systemMsg = "You are a direct, emotionally intelligent productivity coach. You help people close open loops. You believe killing a commitment is just as valid as completing it. You ask uncomfortable but caring questions. Keep responses under 100 words. No bullet points.";
+
+  try {
+    if (settings.provider === 'anthropic') {
+      const model = settings.model || 'claude-sonnet-4-20250514';
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': settings.apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 500,
+          system: systemMsg,
+          messages: [{ role: 'user', content: context }],
+        }),
+      });
+      const data = await res.json();
+      if (data.error) return 'API error: ' + (data.error.message || JSON.stringify(data.error));
+      return data.content?.[0]?.text || 'No response.';
+    } else if (settings.provider === 'openai') {
+      const model = settings.model || 'gpt-4o';
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + settings.apiKey,
+        },
+        body: JSON.stringify({
+          model,
+          max_tokens: 500,
+          messages: [
+            { role: 'system', content: systemMsg },
+            { role: 'user', content: context },
+          ],
+        }),
+      });
+      const data = await res.json();
+      if (data.error) return 'API error: ' + (data.error.message || JSON.stringify(data.error));
+      return data.choices?.[0]?.message?.content || 'No response.';
+    }
+  } catch (e) {
+    return 'Connection failed: ' + e.message;
+  }
+  return null;
+}
+
+// ─── State ───
+let state = {
+  items: loadItems(),
+  stats: loadStats(),
+  view: 'dump',
+  reviewQueue: [],
+  reviewIdx: 0,
+  coachMsg: '',
+  coachLoading: false,
+  filter: 'active',
+};
+
+function getActive() { return state.items.filter(i => ['active','waiting'].includes(i.status)); }
+function getInbox() { return state.items.filter(i => i.status === 'inbox'); }
+function getShelved() { return state.items.filter(i => i.status === 'shelved'); }
+function getClosed() { return state.items.filter(i => ['done','killed'].includes(i.status)); }
+
+function updateItem(id, changes) {
+  state.items = state.items.map(i => i.id === id ? { ...i, ...changes } : i);
+  saveItems(state.items);
+}
+
+function closeItem(id, status, reason) {
+  const changes = { status, lastReviewed: isoNow() };
+  if (reason) changes.killedReason = reason;
+  state.items = state.items.map(i => i.id === id ? { ...i, ...changes } : i);
+  state.stats.closed++;
+  saveItems(state.items);
+  saveStats(state.stats);
+}
+
+function addItems(newOnes) {
+  state.items = [...state.items, ...newOnes];
+  state.stats.opened += newOnes.length;
+  saveItems(state.items);
+  saveStats(state.stats);
+}
+
+function buildReviewQueue() {
+  const q = [];
+  const added = new Set();
+  const push = (item) => { if (!added.has(item.id)) { added.add(item.id); q.push(item); } };
+
+  // Fires
+  state.items.filter(i => i.status === 'active' && i.category === 'fire').forEach(push);
+  // Past deadline
+  state.items.filter(i => i.status === 'active' && i.deadline && i.deadline <= todayStr() && i.category !== 'fire').forEach(push);
+  // Stale
+  state.items.filter(i => i.status === 'active' && i.staleness >= 3).forEach(push);
+  // Shelved past review
+  state.items.filter(i => i.status === 'shelved' && i.reviewDate && i.reviewDate <= todayStr()).forEach(push);
+  // Waiting past review
+  state.items.filter(i => i.status === 'waiting' && i.reviewDate && i.reviewDate <= todayStr()).forEach(push);
+  // Remaining active
+  state.items.filter(i => i.status === 'active').forEach(push);
+  // Inbox
+  state.items.filter(i => i.status === 'inbox').forEach(push);
+
+  return q;
+}
+
+// ─── Render ───
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if (attrs) {
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === 'className') el.className = v;
+      else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+      else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
+      else el.setAttribute(k, v);
+    }
+  }
+  for (const c of children) {
+    if (c == null || c === false) continue;
+    if (typeof c === 'string' || typeof c === 'number') el.appendChild(document.createTextNode(c));
+    else if (Array.isArray(c)) c.forEach(cc => { if (cc) el.appendChild(cc); });
+    else el.appendChild(c);
+  }
+  return el;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  const active = getActive();
+  const inbox = getInbox();
+  const closed = getClosed();
+  const open = state.items.filter(i => !['done','killed'].includes(i.status));
+
+  // Header
+  const header = h('div', { className: 'header' },
+    h('div', { className: 'header-top' },
+      h('h1', null, 'Loop Closer'),
+      h('div', { className: 'header-stats' },
+        h('span', { className: 'closed' }, state.stats.closed + ' closed'),
+        h('span', null, open.length + ' open'),
+        h('button', { className: 'gear-btn', onClick: () => { state.view = 'settings'; render(); } }, '⚙'),
+      ),
+    ),
+    renderCapBar(active.length),
+  );
+  app.appendChild(header);
+
+  // Nav
+  const navItems = [
+    { key: 'dump', label: '📥 Dump' },
+    { key: 'process', label: '⚡ Process' + (inbox.length ? ` (${inbox.length})` : '') },
+    { key: 'review', label: '🔍 Review', action: true },
+    { key: 'loops', label: '📋 All Loops' },
+  ];
+  const nav = h('div', { className: 'nav' },
+    ...navItems.map(n => h('button', {
+      className: state.view === n.key ? 'active' : '',
+      onClick: () => {
+        if (n.action) {
+          state.reviewQueue = buildReviewQueue();
+          state.reviewIdx = 0;
+          state.coachMsg = '';
+        }
+        state.view = n.key;
+        render();
+      }
+    }, n.label))
+  );
+  app.appendChild(nav);
+
+  // Overcapacity warning
+  if (active.length > CAPACITY && state.view !== 'review') {
+    app.appendChild(h('div', { className: 'warning' },
+      `You have ${active.length} active loops. You can handle ~${CAPACITY}. Something needs to be killed or shelved.`
+    ));
+  }
+
+  // Views
+  if (state.view === 'dump') app.appendChild(renderDump());
+  else if (state.view === 'process') app.appendChild(renderProcess());
+  else if (state.view === 'review') app.appendChild(renderReview());
+  else if (state.view === 'loops') app.appendChild(renderList());
+  else if (state.view === 'settings') app.appendChild(renderSettings());
+}
+
+function renderCapBar(activeCount) {
+  const ratio = Math.min(activeCount / CAPACITY, 1.5);
+  const color = ratio > 1 ? '#dc2626' : ratio > 0.8 ? '#d97706' : '#059669';
+  return h('div', { className: 'cap-bar' },
+    h('div', { className: 'cap-labels' },
+      h('span', null, activeCount + ' active'),
+      h('span', null, 'capacity ~' + CAPACITY),
+    ),
+    h('div', { className: 'cap-track' },
+      h('div', { className: 'cap-fill', style: { width: Math.min(ratio * 100, 100) + '%', background: color } }),
+    ),
+  );
+}
+
+// ─── Dump View ───
+function renderDump() {
+  const wrap = h('div', null,
+    h('h2', { style: { fontSize: '20px', fontWeight: '600', marginBottom: '4px' } }, 'Brain dump'),
+    h('p', { style: { color: '#6b7280', fontSize: '14px', marginBottom: '16px' } },
+      "Get it out of your head. One thing per line. Don't organize, don't prioritize. Just dump."
+    ),
+  );
+
+  const ta = h('textarea', {
+    className: 'textarea',
+    placeholder: "Email dad about reimbursement\nFinish USYD enrollment thing\nThat API bug in the kiosk\nCall dentist\n...",
+  });
+  wrap.appendChild(ta);
+
+  const footer = h('div', { style: { display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: '12px' } },
+    h('button', {
+      className: 'btn btn-primary',
+      style: { padding: '10px 24px', fontSize: '14px' },
+      onClick: () => {
+        const lines = ta.value.split('\n').map(l => l.trim()).filter(Boolean);
+        if (!lines.length) return;
+        const newOnes = lines.map(text => ({
+          id: genId(), text, createdAt: isoNow(), category: null, status: 'inbox',
+          nextAction: '', deadline: '', waitingOn: '', reviewDate: '',
+          staleness: 0, estimatedMinutes: null, lastReviewed: null,
+          killedReason: '', promisedTo: '', externalCommitment: false,
+        }));
+        addItems(newOnes);
+        state.view = 'process';
+        render();
+      }
+    }, 'Dump & Process →'),
+  );
+  wrap.appendChild(footer);
+  return wrap;
+}
+
+// ─── Process View ───
+function renderProcess() {
+  const inbox = getInbox();
+  if (!inbox.length) {
+    return h('div', { className: 'card empty' },
+      h('div', { className: 'empty-icon' }, '📭'),
+      h('h3', null, 'Inbox zero.'),
+      h('p', null, "Everything's triaged. Start a review or dump more."),
+    );
+  }
+  return renderTriageCard(inbox[0], inbox.length);
+}
+
+function renderTriageCard(item, remaining) {
+  let selectedCat = item.category;
+  const card = h('div', { className: 'card' });
+
+  // Header
+  card.appendChild(h('div', { className: 'triage-header' },
+    h('span', { style: { fontSize: '12px', color: '#9ca3af' } }, remaining + ' in inbox'),
+    h('button', {
+      className: 'btn btn-kill', style: { fontSize: '12px', padding: '4px 12px' },
+      onClick: () => { closeItem(item.id, 'killed', 'Killed on triage'); render(); }
+    }, 'Kill it'),
+  ));
+
+  card.appendChild(h('h3', { className: 'triage-title' }, '"' + item.text + '"'));
+
+  // Category pills
+  card.appendChild(h('label', { className: 'label' }, 'What kind of loop is this?'));
+  const pillsDiv = h('div', { className: 'pills mb-16' });
+  for (const [key, meta] of Object.entries(CATEGORIES)) {
+    const pill = h('button', {
+      className: 'pill',
+      style: {
+        background: selectedCat === key ? meta.color : (meta.bg || '#f3f4f6'),
+        color: selectedCat === key ? '#fff' : meta.color,
+        borderColor: meta.color,
+      },
+      onClick: () => {
+        selectedCat = key;
+        // Update pill styles
+        pillsDiv.querySelectorAll('.pill').forEach(p => {
+          const k = p.dataset.key;
+          const m = CATEGORIES[k];
+          p.style.background = k === key ? m.color : m.bg;
+          p.style.color = k === key ? '#fff' : m.color;
+        });
+        // Enable activate button
+        activateBtn.disabled = false;
+        activateBtn.style.background = '#4f46e5';
+      },
+    }, meta.icon + ' ' + meta.label);
+    pill.dataset.key = key;
+    pillsDiv.appendChild(pill);
+  }
+  card.appendChild(pillsDiv);
+
+  // Estimate
+  card.appendChild(h('label', { className: 'label' }, 'How many minutes to close this loop? (Be honest.)'));
+  const estRow = h('div', { className: 'mb-16' });
+  const estInput = h('input', { className: 'input', type: 'number', placeholder: 'e.g. 15', style: { width: '120px' } });
+  const estHint = h('span', { className: 'quick-hint', style: { display: 'none' } }, '⚡ Under 5 min — just do it now?');
+  estInput.addEventListener('input', () => {
+    estHint.style.display = (estInput.value && Number(estInput.value) <= 5) ? 'inline' : 'none';
+  });
+  estRow.appendChild(estInput);
+  estRow.appendChild(estHint);
+  card.appendChild(estRow);
+
+  // Next action
+  card.appendChild(h('label', { className: 'label' }, "What's the next physical action?"));
+  const nextInput = h('input', { className: 'input input-full mb-16', type: 'text', placeholder: 'e.g. Open Gmail, search for flight confirmation' });
+  card.appendChild(nextInput);
+
+  // Deadline + Promised
+  const row = h('div', { className: 'flex-row mb-16' });
+  const deadDiv = h('div', null, h('label', { className: 'label' }, 'Deadline?'));
+  const deadInput = h('input', { className: 'input input-full', type: 'date' });
+  deadDiv.appendChild(deadInput);
+  row.appendChild(deadDiv);
+
+  const promDiv = h('div', null, h('label', { className: 'label' }, 'Promised to anyone?'));
+  const promInput = h('input', { className: 'input input-full', type: 'text', placeholder: "e.g. Dad, professor, nobody" });
+  promDiv.appendChild(promInput);
+  row.appendChild(promDiv);
+  card.appendChild(row);
+
+  // Activate button
+  const activateBtn = h('button', {
+    className: 'btn btn-primary btn-full',
+    disabled: !selectedCat,
+    style: { background: selectedCat ? '#4f46e5' : '#d1d5db' },
+    onClick: () => {
+      updateItem(item.id, {
+        category: selectedCat,
+        estimatedMinutes: estInput.value ? Number(estInput.value) : null,
+        nextAction: nextInput.value,
+        deadline: deadInput.value,
+        promisedTo: promInput.value,
+        externalCommitment: !!promInput.value,
+        status: 'active',
+        lastReviewed: isoNow(),
+      });
+      render();
+    }
+  }, 'Activate →');
+  card.appendChild(activateBtn);
+
+  return card;
+}
+
+// ─── Review View ───
+function renderReview() {
+  if (!state.reviewQueue.length) {
+    return h('div', { className: 'card empty' },
+      h('div', { className: 'empty-icon' }, '✨'),
+      h('h3', null, 'Nothing to review.'),
+      h('p', null, 'Your loops are either fresh or closed.'),
+    );
+  }
+
+  if (state.reviewIdx >= state.reviewQueue.length) {
+    return h('div', { className: 'card empty' },
+      h('div', { className: 'empty-icon' }, '🎯'),
+      h('h3', null, 'Review complete.'),
+      h('p', null, 'Reviewed ' + state.reviewIdx + ' loops. Go do the thing.'),
+    );
+  }
+
+  // Re-fetch item from live state (it may have been updated)
+  const queueItem = state.reviewQueue[state.reviewIdx];
+  const item = state.items.find(i => i.id === queueItem.id);
+  if (!item || ['done','killed'].includes(item.status)) {
+    state.reviewIdx++;
+    return renderReview();
+  }
+
+  const age = daysBetween(item.createdAt, isoNow());
+  const meta = item.category ? CATEGORIES[item.category] : null;
+  const isStale = item.staleness >= 3;
+  const isPastDue = item.deadline && item.deadline < todayStr();
+  const activeCount = getActive().length;
+  const autoCoach = getAutoCoach(item, activeCount);
+  const settings = loadSettings();
+
+  const wrap = h('div');
+
+  // Progress
+  const pct = ((state.reviewIdx + 1) / state.reviewQueue.length) * 100;
+  wrap.appendChild(h('div', { className: 'progress' },
+    h('span', { className: 'progress-label' }, (state.reviewIdx + 1) + ' of ' + state.reviewQueue.length),
+    h('div', { className: 'progress-track' },
+      h('div', { className: 'progress-fill', style: { width: pct + '%' } }),
+    ),
+  ));
+
+  const card = h('div', {
+    className: 'card',
+    style: {
+      borderLeft: meta ? '4px solid ' + meta.color : undefined,
+      background: isPastDue ? '#fef2f2' : isStale ? '#fffbeb' : '#fff',
+    }
+  });
+
+  // Tags
+  const tags = h('div', { className: 'review-tags' });
+  if (meta) tags.appendChild(h('span', { className: 'tag', style: { color: meta.color, background: meta.bg } }, meta.icon + ' ' + meta.label));
+  if (isPastDue) tags.appendChild(h('span', { className: 'tag', style: { color: '#dc2626', background: '#fef2f2' } }, '⚠ Past due'));
+  if (isStale) tags.appendChild(h('span', { className: 'tag', style: { color: '#d97706', background: '#fffbeb' } }, '🧊 Stale ×' + item.staleness));
+  tags.appendChild(h('span', { style: { fontSize: '12px', color: '#9ca3af' } }, age + 'd old'));
+  if (item.estimatedMinutes) tags.appendChild(h('span', { style: { fontSize: '12px', color: '#9ca3af' } }, '~' + item.estimatedMinutes + 'm'));
+  card.appendChild(tags);
+
+  // Title
+  card.appendChild(h('h3', { style: { fontSize: '18px', fontWeight: '600', marginBottom: '8px', lineHeight: '1.4' } }, item.text));
+
+  // Meta
+  if (item.nextAction) card.appendChild(h('p', { style: { fontSize: '14px', color: '#4b5563', marginBottom: '4px' } },
+    h('strong', null, 'Next action: '), item.nextAction));
+  if (item.promisedTo) card.appendChild(h('p', { style: { fontSize: '14px', color: '#4b5563', marginBottom: '4px' } },
+    h('strong', null, 'Promised to: '), item.promisedTo));
+  if (item.deadline) card.appendChild(h('p', { style: { fontSize: '14px', color: isPastDue ? '#dc2626' : '#4b5563' } },
+    h('strong', null, 'Deadline: '), item.deadline));
+
+  // Auto coach
+  card.appendChild(h('div', { className: 'coach-auto' }, autoCoach));
+
+  // AI coach response
+  if (state.coachMsg) {
+    card.appendChild(h('div', { className: 'coach-ai' }, state.coachMsg));
+  }
+
+  // Actions
+  const advance = () => { state.reviewIdx++; state.coachMsg = ''; render(); };
+
+  const actions = h('div', { className: 'actions' },
+    h('button', { className: 'btn btn-green', onClick: () => { closeItem(item.id, 'done'); advance(); } }, '✓ Done'),
+    h('button', { className: 'btn btn-kill', onClick: () => {
+      const reason = prompt('Why are you killing it? (This is for you, not me.)');
+      closeItem(item.id, 'killed', reason || 'No reason given');
+      advance();
+    }}, '✕ Kill'),
+    h('button', { className: 'btn btn-ghost', onClick: () => {
+      const d = prompt('When should this come back? (YYYY-MM-DD)');
+      if (d) { updateItem(item.id, { status: 'shelved', reviewDate: d, lastReviewed: isoNow(), staleness: 0 }); advance(); }
+    }}, '⏸ Shelve'),
+    h('button', { className: 'btn btn-ghost', onClick: () => {
+      updateItem(item.id, { staleness: item.staleness + 1, lastReviewed: isoNow() });
+      advance();
+    }}, '→ Skip'),
+  );
+
+  // AI button
+  const aiBtn = h('button', {
+    className: 'btn btn-coach',
+    onClick: async () => {
+      if (!settings.apiKey) {
+        state.coachMsg = 'No API key configured. Go to ⚙ Settings to add one, or just sit with the question above.';
+        render();
+        return;
+      }
+      aiBtn.textContent = 'Thinking...';
+      aiBtn.disabled = true;
+      const msg = await callAI(item, state.items);
+      state.coachMsg = msg || 'No response — but the question above still stands.';
+      render();
+    }
+  }, '🧠 Ask AI');
+  actions.appendChild(aiBtn);
+
+  card.appendChild(actions);
+  wrap.appendChild(card);
+  return wrap;
+}
+
+// ─── List View ───
+function renderList() {
+  const wrap = h('div');
+
+  const pills = h('div', { className: 'pills mb-16' });
+  const filters = ['active', 'waiting', 'shelved', 'inbox', 'all', 'closed'];
+  for (const f of filters) {
+    const count = f === 'all'
+      ? state.items.filter(i => !['done','killed'].includes(i.status)).length
+      : f === 'closed'
+      ? getClosed().length
+      : state.items.filter(i => i.status === f).length;
+    pills.appendChild(h('button', {
+      className: 'pill',
+      style: {
+        background: state.filter === f ? '#6366f1' : '#eef2ff',
+        color: state.filter === f ? '#fff' : '#6366f1',
+        borderColor: '#6366f1',
+      },
+      onClick: () => { state.filter = f; render(); }
+    }, f + ' (' + count + ')'));
+  }
+  wrap.appendChild(pills);
+
+  const filtered = state.filter === 'all'
+    ? state.items.filter(i => !['done','killed'].includes(i.status))
+    : state.filter === 'closed'
+    ? getClosed().sort((a, b) => new Date(b.lastReviewed || b.createdAt) - new Date(a.lastReviewed || a.createdAt))
+    : state.items.filter(i => i.status === state.filter);
+
+  if (!filtered.length) {
+    wrap.appendChild(h('p', { style: { color: '#9ca3af', textAlign: 'center', padding: '40px' } }, 'Nothing here.'));
+    return wrap;
+  }
+
+  const list = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px' } });
+  for (const item of filtered) {
+    const meta = item.category ? CATEGORIES[item.category] : null;
+    const age = daysBetween(item.createdAt, isoNow());
+    const isClosed = ['done','killed'].includes(item.status);
+
+    const el = h('div', {
+      className: 'loop-item' + (isClosed ? ' closed' : ''),
+      style: { borderLeftColor: meta ? meta.color : '#e5e7eb' },
+    },
+      h('div', { className: 'loop-item-row' },
+        h('div', { style: { flex: '1' } },
+          h('span', {
+            className: 'loop-item-text',
+            style: { textDecoration: isClosed ? 'line-through' : 'none' },
+          }, (meta ? meta.icon + ' ' : '') + item.text),
+          item.nextAction ? h('p', { className: 'loop-item-next' }, '→ ' + item.nextAction) : null,
+          isClosed && item.killedReason
+            ? h('p', { style: { fontSize: '12px', color: '#9ca3af', marginTop: '2px', fontStyle: 'italic' } }, 'Killed: ' + item.killedReason)
+            : null,
+        ),
+        h('div', { className: 'loop-item-meta' },
+          item.staleness > 0 && !isClosed ? h('span', { className: 'stale' }, 'stale×' + item.staleness) : null,
+          h('span', null, age + 'd'),
+          item.status === 'done' ? h('span', null, '✓') : null,
+          item.status === 'killed' ? h('span', null, '✕') : null,
+        ),
+      ),
+    );
+    list.appendChild(el);
+  }
+  wrap.appendChild(list);
+  return wrap;
+}
+
+// ─── Settings View ───
+function renderSettings() {
+  const settings = loadSettings();
+  const wrap = h('div');
+
+  wrap.appendChild(h('h2', { style: { fontSize: '20px', fontWeight: '600', marginBottom: '16px' } }, 'Settings'));
+
+  // AI section
+  const ai = h('div', { className: 'settings-section' });
+  ai.appendChild(h('h3', null, '🧠 AI Coaching (optional)'));
+  ai.appendChild(h('p', null, "Add an API key to get AI coaching during reviews. Without it, the system uses built-in coaching prompts — still useful, just not personalized. Your key is stored locally in your browser, never sent anywhere except the provider you choose."));
+
+  const provRow = h('div', { className: 'settings-row' });
+  provRow.appendChild(h('label', null, 'Provider'));
+  const provSelect = h('select', { className: 'input' });
+  provSelect.appendChild(h('option', { value: 'anthropic' }, 'Anthropic (Claude)'));
+  provSelect.appendChild(h('option', { value: 'openai' }, 'OpenAI'));
+  provSelect.value = settings.provider;
+  provRow.appendChild(provSelect);
+  ai.appendChild(provRow);
+
+  const keyRow = h('div', { className: 'settings-row' });
+  keyRow.appendChild(h('label', null, 'API Key'));
+  const keyInput = h('input', { className: 'input', type: 'password', placeholder: 'sk-...', value: settings.apiKey || '' });
+  keyRow.appendChild(keyInput);
+  ai.appendChild(keyRow);
+
+  const modelRow = h('div', { className: 'settings-row' });
+  modelRow.appendChild(h('label', null, 'Model'));
+  const modelInput = h('input', { className: 'input', type: 'text', placeholder: provSelect.value === 'anthropic' ? 'claude-sonnet-4-20250514' : 'gpt-4o' });
+  modelInput.value = settings.model || '';
+  provSelect.addEventListener('change', () => {
+    modelInput.placeholder = provSelect.value === 'anthropic' ? 'claude-sonnet-4-20250514' : 'gpt-4o';
+  });
+  modelRow.appendChild(modelInput);
+  ai.appendChild(modelRow);
+
+  ai.appendChild(h('button', {
+    className: 'btn btn-primary', style: { marginTop: '8px' },
+    onClick: () => {
+      saveSettings({ apiKey: keyInput.value, provider: provSelect.value, model: modelInput.value });
+      state.view = 'dump';
+      render();
+    }
+  }, 'Save'));
+
+  wrap.appendChild(ai);
+
+  // Data section
+  const data = h('div', { className: 'settings-section' });
+  data.appendChild(h('h3', null, '💾 Data'));
+  data.appendChild(h('p', null, 'Your data lives in localStorage — on your hard drive, in this browser. It never leaves your machine (unless you add an API key, in which case individual loop details are sent to the AI provider during coaching).'));
+
+  data.appendChild(h('button', {
+    className: 'btn btn-ghost', style: { marginRight: '8px' },
+    onClick: () => {
+      const blob = new Blob([JSON.stringify({ items: state.items, stats: state.stats }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'loop-closer-backup-' + todayStr() + '.json';
+      a.click(); URL.revokeObjectURL(url);
+    }
+  }, '📦 Export Backup'));
+
+  data.appendChild(h('button', {
+    className: 'btn btn-ghost',
+    onClick: () => {
+      const input = document.createElement('input');
+      input.type = 'file'; input.accept = '.json';
+      input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = JSON.parse(ev.target.result);
+            if (data.items) { state.items = data.items; saveItems(state.items); }
+            if (data.stats) { state.stats = data.stats; saveStats(state.stats); }
+            render();
+          } catch { alert('Invalid backup file.'); }
+        };
+        reader.readAsText(file);
+      });
+      input.click();
+    }
+  }, '📂 Import Backup'));
+  wrap.appendChild(data);
+
+  // Danger zone
+  const danger = h('div', { className: 'danger-zone' });
+  danger.appendChild(h('h3', null, '⚠ Danger Zone'));
+  danger.appendChild(h('button', {
+    className: 'btn btn-kill', style: { marginTop: '8px' },
+    onClick: () => {
+      if (confirm('This will delete ALL your loops and stats. Are you sure?')) {
+        state.items = []; state.stats = { opened: 0, closed: 0 };
+        saveItems([]); saveStats(state.stats);
+        state.view = 'dump';
+        render();
+      }
+    }
+  }, 'Delete All Data'));
+  wrap.appendChild(danger);
+
+  // Back
+  wrap.appendChild(h('button', {
+    className: 'btn btn-ghost', style: { marginTop: '20px' },
+    onClick: () => { state.view = 'dump'; render(); }
+  }, '← Back'));
+
+  return wrap;
+}
+
+// Boot
+render();
+</script>
+</body>
+</html>
