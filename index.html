@@ -142,6 +142,7 @@
     padding: 12px 16px; background: #fff; border: 1px solid var(--border);
     border-radius: 8px; border-left: 3px solid var(--border);
   }
+  .loop-item:not(.closed):hover { background: #f9fafb; }
   .loop-item.closed { opacity: 0.6; background: #f9fafb; }
   .loop-item-row { display: flex; justify-content: space-between; align-items: flex-start; }
   .loop-item-text { font-size: 14px; font-weight: 500; }
@@ -342,6 +343,8 @@ let state = {
   coachMsg: '',
   coachLoading: false,
   filter: 'active',
+  editing: null,
+  editingFrom: null,
 };
 
 function getActive() { return state.items.filter(i => ['active','waiting'].includes(i.status)); }
@@ -503,11 +506,197 @@ function render() {
   }
 
   // Views
-  if (state.view === 'dump') app.appendChild(renderDump());
+  if (state.editing) app.appendChild(renderEdit());
+  else if (state.view === 'dump') app.appendChild(renderDump());
   else if (state.view === 'process') app.appendChild(renderProcess());
   else if (state.view === 'review') app.appendChild(renderReview());
   else if (state.view === 'loops') app.appendChild(renderList());
   else if (state.view === 'settings') app.appendChild(renderSettings());
+}
+
+// ─── Edit View ───
+function renderEdit() {
+  const item = state.items.find(i => i.id === state.editing);
+  if (!item) { state.editing = null; render(); return h('div'); }
+
+  const meta = item.category ? CATEGORIES[item.category] : null;
+  const age = daysBetween(item.createdAt, isoNow());
+  let selectedCat = item.category;
+  let selectedStatus = item.status;
+
+  const wrap = h('div');
+  const card = h('div', { className: 'card' });
+
+  // Header
+  card.appendChild(h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' } },
+    h('span', { style: { fontSize: '12px', color: '#9ca3af' } }, 'Editing · ' + age + 'd old'),
+    h('button', {
+      className: 'btn btn-ghost', style: { fontSize: '12px', padding: '4px 12px' },
+      onClick: () => {
+        state.editing = null;
+        if (state.editingFrom === 'review') state.view = 'review';
+        state.editingFrom = null;
+        render();
+      }
+    }, '← Back'),
+  ));
+
+  // Text
+  card.appendChild(h('label', { className: 'label' }, 'Loop'));
+  const textInput = h('input', { className: 'input input-full mb-16', type: 'text', value: item.text });
+  card.appendChild(textInput);
+
+  // Category
+  card.appendChild(h('label', { className: 'label' }, 'Category'));
+  const pillsDiv = h('div', { className: 'pills mb-16' });
+  for (const [key, m] of Object.entries(CATEGORIES)) {
+    const pill = h('button', {
+      className: 'pill',
+      style: {
+        background: selectedCat === key ? m.color : m.bg,
+        color: selectedCat === key ? '#fff' : m.color,
+        borderColor: m.color,
+      },
+      onClick: () => {
+        selectedCat = key;
+        pillsDiv.querySelectorAll('.pill').forEach(p => {
+          const k = p.dataset.key;
+          const cm = CATEGORIES[k];
+          p.style.background = k === key ? cm.color : cm.bg;
+          p.style.color = k === key ? '#fff' : cm.color;
+        });
+      },
+    }, m.icon + ' ' + m.label);
+    pill.dataset.key = key;
+    pillsDiv.appendChild(pill);
+  }
+  card.appendChild(pillsDiv);
+
+  // Status
+  card.appendChild(h('label', { className: 'label' }, 'Status'));
+  const statusDiv = h('div', { className: 'pills mb-16' });
+  const statuses = ['active', 'waiting', 'shelved', 'inbox'];
+  for (const s of statuses) {
+    const pill = h('button', {
+      className: 'pill',
+      style: {
+        background: selectedStatus === s ? '#6366f1' : '#eef2ff',
+        color: selectedStatus === s ? '#fff' : '#6366f1',
+        borderColor: '#6366f1',
+      },
+      onClick: () => {
+        selectedStatus = s;
+        statusDiv.querySelectorAll('.pill').forEach(p => {
+          const k = p.dataset.key;
+          p.style.background = k === s ? '#6366f1' : '#eef2ff';
+          p.style.color = k === s ? '#fff' : '#6366f1';
+        });
+      },
+    }, s);
+    pill.dataset.key = s;
+    statusDiv.appendChild(pill);
+  }
+  card.appendChild(statusDiv);
+
+  // Next action
+  card.appendChild(h('label', { className: 'label' }, 'Next physical action'));
+  const nextInput = h('input', { className: 'input input-full mb-16', type: 'text', value: item.nextAction || '', placeholder: 'e.g. Open Gmail, search for confirmation' });
+  card.appendChild(nextInput);
+
+  // Estimate
+  card.appendChild(h('label', { className: 'label' }, 'Estimated minutes'));
+  const estInput = h('input', { className: 'input mb-16', type: 'number', value: item.estimatedMinutes || '', placeholder: 'e.g. 15', style: { width: '120px' } });
+  card.appendChild(estInput);
+
+  // Row: deadline + promised + waiting + review date
+  const row1 = h('div', { className: 'flex-row mb-16' });
+  const deadDiv = h('div', null, h('label', { className: 'label' }, 'Deadline'));
+  const deadInput = h('input', { className: 'input input-full', type: 'date', value: item.deadline || '' });
+  deadDiv.appendChild(deadInput);
+  row1.appendChild(deadDiv);
+  const promDiv = h('div', null, h('label', { className: 'label' }, 'Promised to'));
+  const promInput = h('input', { className: 'input input-full', type: 'text', value: item.promisedTo || '', placeholder: 'e.g. Dad' });
+  promDiv.appendChild(promInput);
+  row1.appendChild(promDiv);
+  card.appendChild(row1);
+
+  const row2 = h('div', { className: 'flex-row mb-16' });
+  const waitDiv = h('div', null, h('label', { className: 'label' }, 'Waiting on'));
+  const waitInput = h('input', { className: 'input input-full', type: 'text', value: item.waitingOn || '', placeholder: 'e.g. Reply from X' });
+  waitDiv.appendChild(waitInput);
+  row2.appendChild(waitDiv);
+  const revDiv = h('div', null, h('label', { className: 'label' }, 'Review date (for shelved)'));
+  const revInput = h('input', { className: 'input input-full', type: 'date', value: item.reviewDate || '' });
+  revDiv.appendChild(revInput);
+  row2.appendChild(revDiv);
+  card.appendChild(row2);
+
+  // Action buttons
+  const actions = h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } });
+
+  actions.appendChild(h('button', {
+    className: 'btn btn-primary',
+    onClick: () => {
+      updateItem(item.id, {
+        text: textInput.value,
+        category: selectedCat,
+        status: selectedStatus,
+        nextAction: nextInput.value,
+        estimatedMinutes: estInput.value ? Number(estInput.value) : null,
+        deadline: deadInput.value,
+        promisedTo: promInput.value,
+        externalCommitment: !!promInput.value,
+        waitingOn: waitInput.value,
+        reviewDate: revInput.value,
+        lastReviewed: isoNow(),
+      });
+      state.editing = null;
+      if (state.editingFrom === 'review') { state.view = 'review'; }
+      state.editingFrom = null;
+      render();
+    }
+  }, 'Save'));
+
+  actions.appendChild(h('button', {
+    className: 'btn btn-green',
+    onClick: () => {
+      closeItem(item.id, 'done');
+      state.editing = null;
+      if (state.editingFrom === 'review') { state.reviewIdx++; state.coachMsg = ''; state.view = 'review'; }
+      state.editingFrom = null;
+      render();
+    }
+  }, '✓ Done'));
+
+  actions.appendChild(h('button', {
+    className: 'btn btn-kill',
+    onClick: () => {
+      const reason = prompt('Why are you killing it?');
+      closeItem(item.id, 'killed', reason || 'No reason given');
+      state.editing = null;
+      if (state.editingFrom === 'review') { state.reviewIdx++; state.coachMsg = ''; state.view = 'review'; }
+      state.editingFrom = null;
+      render();
+    }
+  }, '✕ Kill'));
+
+  actions.appendChild(h('button', {
+    className: 'btn btn-ghost', style: { marginLeft: 'auto' },
+    onClick: () => {
+      if (confirm('Permanently delete "' + item.text + '"? (This is different from killing — it won\'t appear in your closed list.)')) {
+        state.items = state.items.filter(i => i.id !== item.id);
+        saveItems(state.items);
+        state.editing = null;
+        if (state.editingFrom === 'review') { state.reviewIdx++; state.coachMsg = ''; state.view = 'review'; }
+        state.editingFrom = null;
+        render();
+      }
+    }
+  }, '🗑 Delete'));
+
+  card.appendChild(actions);
+  wrap.appendChild(card);
+  return wrap;
 }
 
 function renderCapBar(activeCount) {
@@ -793,6 +982,12 @@ function renderReview() {
   }, '🧠 Ask AI');
   actions.appendChild(aiBtn);
 
+  // Edit button
+  actions.appendChild(h('button', {
+    className: 'btn btn-ghost', style: { fontSize: '12px', padding: '8px 12px' },
+    onClick: () => { state.editing = item.id; state.editingFrom = 'review'; render(); }
+  }, '✏ Edit'));
+
   card.appendChild(actions);
   wrap.appendChild(card);
   return wrap;
@@ -841,7 +1036,10 @@ function renderList() {
 
     const el = h('div', {
       className: 'loop-item' + (isClosed ? ' closed' : ''),
-      style: { borderLeftColor: meta ? meta.color : '#e5e7eb' },
+      style: { borderLeftColor: meta ? meta.color : '#e5e7eb', cursor: isClosed ? 'default' : 'pointer' },
+      onClick: () => {
+        if (!isClosed) { state.editing = item.id; state.editingFrom = 'loops'; render(); }
+      },
     },
       h('div', { className: 'loop-item-row' },
         h('div', { style: { flex: '1' } },
