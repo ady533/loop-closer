@@ -6,218 +6,125 @@
 <title>Loop Closer</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #fafafa;
-    --card: #fff;
-    --border: #e5e7eb;
-    --text: #111827;
-    --muted: #6b7280;
-    --faint: #9ca3af;
-    --indigo: #4f46e5;
-    --indigo-light: #eef2ff;
-    --green: #059669;
-    --green-light: #ecfdf5;
-    --red: #dc2626;
-    --red-light: #fef2f2;
-    --amber: #d97706;
-    --amber-light: #fffbeb;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    font-family: 'DM Sans', -apple-system, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.5;
-    min-height: 100vh;
-  }
-
-  .app {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 16px 16px 100px;
-  }
-
-  /* Header */
-  .header { margin-bottom: 20px; }
-  .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
-  .header-stats { display: flex; gap: 16px; font-size: 13px; color: var(--muted); }
-  .header-stats .closed { color: var(--green); font-weight: 600; }
-
-  /* Capacity bar */
-  .cap-bar { margin-bottom: 8px; }
-  .cap-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-  .cap-track { height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
-  .cap-fill { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; }
-
-  /* Nav */
-  .nav { display: flex; gap: 4px; margin-bottom: 20px; background: #f3f4f6; border-radius: 10px; padding: 4px; }
-  .nav button {
-    flex: 1; padding: 8px 4px; background: transparent; border: none;
-    border-radius: 8px; font-size: 13px; font-weight: 400; color: var(--muted);
-    cursor: pointer; font-family: inherit; transition: all 0.15s;
-  }
-  .nav button.active {
-    background: #fff; font-weight: 600; color: var(--text);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  }
-
-  /* Cards */
-  .card {
-    background: var(--card); border-radius: 12px;
-    border: 1px solid var(--border); padding: 24px;
-  }
-
-  /* Buttons */
-  .btn {
-    border: none; border-radius: 8px; padding: 8px 16px;
-    font-size: 13px; font-weight: 600; cursor: pointer;
-    font-family: inherit; transition: all 0.15s;
-  }
-  .btn-primary { background: var(--indigo); color: #fff; }
-  .btn-primary:disabled { background: #d1d5db; cursor: default; }
-  .btn-green { background: var(--green); color: #fff; }
-  .btn-kill { background: #fff; color: var(--red); border: 1.5px solid #fca5a5; }
-  .btn-ghost { background: #fff; color: var(--muted); border: 1.5px solid #d1d5db; }
-  .btn-coach { background: #f8f7ff; color: var(--indigo); border: 1.5px solid #c7d2fe; margin-left: auto; }
-  .btn-full { width: 100%; padding: 10px 24px; font-size: 14px; }
-
-  /* Pills */
-  .pills { display: flex; gap: 8px; flex-wrap: wrap; }
-  .pill {
-    border-radius: 20px; padding: 6px 16px; font-size: 14px;
-    font-weight: 500; cursor: pointer; font-family: inherit;
-    border: 1.5px solid; transition: all 0.15s;
-  }
-
-  /* Inputs */
-  .input, .textarea {
-    padding: 8px 12px; border: 1.5px solid #d1d5db; border-radius: 8px;
-    font-size: 14px; font-family: inherit; outline: none;
-    transition: border-color 0.15s;
-  }
-  .input:focus, .textarea:focus { border-color: var(--indigo); }
-  .textarea {
-    width: 100%; min-height: 200px; resize: vertical;
-    font-family: 'IBM Plex Mono', monospace; font-size: 15px;
-    line-height: 1.7; background: #fafafa;
-  }
-  .input-full { width: 100%; }
-
-  /* Tags */
-  .tag {
-    font-size: 12px; padding: 2px 10px; border-radius: 12px;
-    display: inline-block;
-  }
-
-  /* Warning banner */
-  .warning {
-    padding: 10px 14px; background: var(--red-light);
-    border: 1px solid #fecaca; border-radius: 8px;
-    margin-bottom: 16px; font-size: 13px; color: #991b1b; line-height: 1.5;
-  }
-
-  /* Coach message */
-  .coach-auto {
-    margin-top: 16px; padding: 14px; background: #f8f7ff;
-    border-radius: 8px; border-left: 3px solid var(--indigo);
-    font-size: 14px; color: #4338ca; line-height: 1.5; font-style: italic;
-  }
-  .coach-ai {
-    margin-top: 12px; padding: 14px; background: var(--green-light);
-    border-radius: 8px; border-left: 3px solid var(--green);
-    font-size: 14px; color: #065f46; line-height: 1.6;
-  }
-
-  /* Progress bar */
-  .progress { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .progress-label { font-size: 13px; color: var(--faint); }
-  .progress-track { height: 3px; flex: 1; margin: 0 16px; background: #f3f4f6; border-radius: 2px; }
-  .progress-fill { height: 100%; background: var(--indigo); border-radius: 2px; transition: width 0.3s; }
-
-  /* List items */
-  .loop-item {
-    padding: 12px 16px; background: #fff; border: 1px solid var(--border);
-    border-radius: 8px; border-left: 3px solid var(--border);
-  }
-  .loop-item:not(.closed):hover { background: #f9fafb; }
-  .loop-item.closed { opacity: 0.6; background: #f9fafb; }
-  .loop-item-row { display: flex; justify-content: space-between; align-items: flex-start; }
-  .loop-item-text { font-size: 14px; font-weight: 500; }
-  .loop-item-next { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .loop-item-meta { display: flex; gap: 6px; align-items: center; flex-shrink: 0; margin-left: 12px; }
-  .loop-item-meta span { font-size: 11px; color: var(--faint); }
-  .loop-item-meta .stale { color: var(--amber); }
-
-  /* Empty states */
-  .empty { text-align: center; padding: 40px; }
-  .empty-icon { font-size: 40px; margin-bottom: 12px; }
-  .empty h3 { font-size: 18px; font-weight: 600; }
-  .empty p { color: var(--muted); margin-top: 8px; }
-
-  /* Settings */
-  .settings-section { margin-top: 20px; }
-  .settings-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
-  .settings-section p { font-size: 13px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
-  .settings-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
-  .settings-row label { font-size: 13px; color: var(--muted); min-width: 80px; }
-  .settings-row input, .settings-row select { flex: 1; }
-
-  /* Misc */
-  .flex-row { display: flex; gap: 12px; }
-  .flex-row > * { flex: 1; }
-  .mb-4 { margin-bottom: 4px; }
-  .mb-6 { margin-bottom: 6px; }
-  .mb-8 { margin-bottom: 8px; }
-  .mb-12 { margin-bottom: 12px; }
-  .mb-16 { margin-bottom: 16px; }
-  .mb-20 { margin-bottom: 20px; }
-  .mt-12 { margin-top: 12px; }
-  .mt-16 { margin-top: 16px; }
-  .mt-20 { margin-top: 20px; }
-  .label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
-  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
-  .quick-hint { color: var(--amber); font-size: 13px; margin-left: 12px; }
-  .gear-btn {
-    background: none; border: none; font-size: 18px; cursor: pointer;
-    padding: 4px; color: var(--muted); transition: color 0.15s;
-  }
-  .gear-btn:hover { color: var(--text); }
-  .triage-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .triage-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; line-height: 1.4; }
-  .review-tags { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
-
-  .danger-zone { margin-top: 32px; padding-top: 20px; border-top: 1px solid #fecaca; }
-  .danger-zone h3 { color: var(--red); }
+:root {
+  --bg: #fafafa; --card: #fff; --border: #e5e7eb; --text: #111827;
+  --muted: #6b7280; --faint: #9ca3af; --indigo: #4f46e5; --indigo-light: #eef2ff;
+  --green: #059669; --green-light: #ecfdf5; --red: #dc2626; --red-light: #fef2f2;
+  --amber: #d97706; --amber-light: #fffbeb;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; }
+.app { max-width: 640px; margin: 0 auto; padding: 16px 16px 100px; }
+.header { margin-bottom: 20px; }
+.header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.header h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+.header-stats { display: flex; gap: 16px; font-size: 13px; color: var(--muted); align-items: center; }
+.header-stats .closed { color: var(--green); font-weight: 600; }
+.cap-bar { margin-bottom: 8px; }
+.cap-labels { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.cap-track { height: 6px; background: #f3f4f6; border-radius: 3px; overflow: hidden; }
+.cap-fill { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; }
+.nav { display: flex; gap: 4px; margin-bottom: 20px; background: #f3f4f6; border-radius: 10px; padding: 4px; }
+.nav button { flex: 1; padding: 8px 4px; background: transparent; border: none; border-radius: 8px; font-size: 13px; font-weight: 400; color: var(--muted); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.nav button.active { background: #fff; font-weight: 600; color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+.card { background: var(--card); border-radius: 12px; border: 1px solid var(--border); padding: 24px; }
+.btn { border: none; border-radius: 8px; padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.btn:disabled { opacity: 0.5; cursor: default; }
+.btn-primary { background: var(--indigo); color: #fff; }
+.btn-green { background: var(--green); color: #fff; }
+.btn-kill { background: #fff; color: var(--red); border: 1.5px solid #fca5a5; }
+.btn-ghost { background: #fff; color: var(--muted); border: 1.5px solid #d1d5db; }
+.btn-coach { background: #f8f7ff; color: var(--indigo); border: 1.5px solid #c7d2fe; }
+.btn-sm { font-size: 12px; padding: 4px 10px; }
+.btn-full { width: 100%; padding: 10px 24px; font-size: 14px; }
+.pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill { border-radius: 20px; padding: 6px 16px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; border: 1.5px solid; transition: all 0.15s; background: none; }
+.input, .textarea { padding: 8px 12px; border: 1.5px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; transition: border-color 0.15s; }
+.input:focus, .textarea:focus { border-color: var(--indigo); }
+.textarea { width: 100%; min-height: 200px; resize: vertical; font-family: 'IBM Plex Mono', monospace; font-size: 15px; line-height: 1.7; background: #fafafa; }
+.input-full { width: 100%; }
+.tag { font-size: 12px; padding: 2px 10px; border-radius: 12px; display: inline-block; }
+.warning { padding: 10px 14px; background: var(--red-light); border: 1px solid #fecaca; border-radius: 8px; margin-bottom: 16px; font-size: 13px; color: #991b1b; line-height: 1.5; }
+.coach-auto { margin-top: 16px; padding: 14px; background: #f8f7ff; border-radius: 8px; border-left: 3px solid var(--indigo); font-size: 14px; color: #4338ca; line-height: 1.5; font-style: italic; }
+.progress { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.progress-label { font-size: 13px; color: var(--faint); }
+.progress-track { height: 3px; flex: 1; margin: 0 16px; background: #f3f4f6; border-radius: 2px; }
+.progress-fill { height: 100%; background: var(--indigo); border-radius: 2px; transition: width 0.3s; }
+.loop-item { padding: 12px 16px; background: #fff; border: 1px solid var(--border); border-radius: 8px; border-left: 3px solid var(--border); transition: background 0.1s; }
+.loop-item:not(.closed):hover { background: #f9fafb; cursor: pointer; }
+.loop-item.closed { opacity: 0.6; background: #f9fafb; }
+.loop-item-row { display: flex; justify-content: space-between; align-items: flex-start; }
+.loop-item-text { font-size: 14px; font-weight: 500; }
+.loop-item-next { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.loop-item-meta { display: flex; gap: 6px; align-items: center; flex-shrink: 0; margin-left: 12px; }
+.loop-item-meta span { font-size: 11px; color: var(--faint); }
+.loop-item-meta .stale { color: var(--amber); }
+.empty { text-align: center; padding: 40px; }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty h3 { font-size: 18px; font-weight: 600; }
+.empty p { color: var(--muted); margin-top: 8px; }
+.label { font-size: 13px; color: var(--muted); display: block; margin-bottom: 6px; }
+.flex-row { display: flex; gap: 12px; }
+.flex-row > * { flex: 1; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+.quick-hint { color: var(--amber); font-size: 13px; margin-left: 12px; }
+.gear-btn { background: none; border: none; font-size: 18px; cursor: pointer; padding: 4px; color: var(--muted); }
+.gear-btn:hover { color: var(--text); }
+.settings-section { margin-top: 20px; }
+.settings-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+.settings-section p { font-size: 13px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+.settings-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+.settings-row label { font-size: 13px; color: var(--muted); min-width: 80px; }
+.settings-row input, .settings-row select { flex: 1; }
+.danger-zone { margin-top: 32px; padding-top: 20px; border-top: 1px solid #fecaca; }
+.danger-zone h3 { color: var(--red); }
+.chat-wrap { margin-top: 16px; }
+.chat-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; flex-wrap: wrap; }
+.chat-messages { max-height: 400px; overflow-y: auto; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
+.chat-msg { padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; position: relative; white-space: pre-wrap; word-break: break-word; }
+.chat-msg.user { background: var(--indigo-light); color: #312e81; margin-left: 32px; border-bottom-right-radius: 4px; }
+.chat-msg.assistant { background: #f3f4f6; color: var(--text); margin-right: 32px; border-bottom-left-radius: 4px; }
+.chat-msg.system { background: var(--amber-light); color: #92400e; font-style: italic; font-size: 13px; text-align: center; }
+.chat-msg-actions { position: absolute; top: 4px; right: 8px; display: none; gap: 4px; }
+.chat-msg:hover .chat-msg-actions { display: flex; }
+.chat-msg-btn { background: none; border: none; font-size: 12px; cursor: pointer; color: var(--muted); padding: 2px 4px; border-radius: 4px; }
+.chat-msg-btn:hover { background: rgba(0,0,0,0.08); }
+.chat-input-row { display: flex; gap: 8px; }
+.chat-input { flex: 1; padding: 10px 14px; border: 1.5px solid #d1d5db; border-radius: 10px; font-size: 14px; font-family: inherit; outline: none; resize: none; min-height: 42px; max-height: 120px; }
+.chat-input:focus { border-color: var(--indigo); }
+.ai-suggestion { margin-top: 12px; padding: 12px 14px; background: var(--green-light); border: 1px solid #a7f3d0; border-radius: 10px; }
+.ai-suggestion-text { font-size: 14px; color: #065f46; margin-bottom: 8px; line-height: 1.5; }
+.ai-suggestion-label { font-size: 11px; font-weight: 600; color: var(--green); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.scratchpad { margin-top: 12px; border: 1px solid #d1d5db; border-radius: 10px; overflow: hidden; }
+.scratchpad-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: #f9fafb; border-bottom: 1px solid #e5e7eb; cursor: pointer; user-select: none; }
+.scratchpad-header:hover { background: #f3f4f6; }
+.scratchpad-title { font-size: 13px; font-weight: 600; color: var(--muted); }
+.scratchpad-body { padding: 8px; }
+.scratchpad-ta { width: 100%; min-height: 80px; border: none; outline: none; font-family: 'IBM Plex Mono', monospace; font-size: 13px; line-height: 1.6; resize: vertical; background: transparent; padding: 4px; }
+.scratchpad-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.scratchpad-toggle input { accent-color: var(--indigo); }
+.export-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 6px; }
+.export-item input { accent-color: var(--indigo); flex-shrink: 0; }
+.export-item label { font-size: 14px; flex: 1; cursor: pointer; }
+.model-select { padding: 4px 8px; border: 1.5px solid #d1d5db; border-radius: 6px; font-size: 12px; font-family: inherit; outline: none; background: #fff; }
 </style>
 </head>
 <body>
 <div class="app" id="app"></div>
-
 <script>
-// ─── Constants & Helpers ───
 const CAPACITY = 7;
-const LS_KEY = 'loop-closer-items';
-const LS_STATS = 'loop-closer-stats';
-const LS_SETTINGS = 'loop-closer-settings';
-
+const LS = k => 'loop-closer-' + k;
 const genId = () => Math.random().toString(36).slice(2, 10);
 const isoNow = () => new Date().toISOString();
 const todayStr = () => new Date().toISOString().split('T')[0];
 const daysBetween = (a, b) => Math.floor((new Date(b) - new Date(a)) / 86400000);
 
-function loadItems() { try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; } }
-function saveItems(items) { localStorage.setItem(LS_KEY, JSON.stringify(items)); }
-function loadStats() { try { return JSON.parse(localStorage.getItem(LS_STATS)) || { opened: 0, closed: 0 }; } catch { return { opened: 0, closed: 0 }; } }
-function saveStats(s) { localStorage.setItem(LS_STATS, JSON.stringify(s)); }
-function loadSettings() {
-  try { return JSON.parse(localStorage.getItem(LS_SETTINGS)) || { apiKey: '', provider: 'anthropic', model: '' }; }
-  catch { return { apiKey: '', provider: 'anthropic', model: '' }; }
-}
-function saveSettings(s) { localStorage.setItem(LS_SETTINGS, JSON.stringify(s)); }
-
+const MODELS = [
+  { id: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5', desc: 'Fast' },
+  { id: 'claude-sonnet-4-5-20250929', label: 'Sonnet 4.5', desc: 'Balanced' },
+  { id: 'claude-opus-4-6', label: 'Opus 4.6', desc: 'Best' },
+  { id: 'claude-3-opus-20240229', label: 'Opus 3', desc: 'Legacy' },
+];
 const CATEGORIES = {
   fire: { icon: '🔥', label: 'Fire', color: '#dc2626', bg: '#fef2f2' },
   committed: { icon: '🤝', label: 'Committed', color: '#d97706', bg: '#fffbeb' },
@@ -225,1126 +132,515 @@ const CATEGORIES = {
   idea: { icon: '💭', label: 'Idea', color: '#6366f1', bg: '#eef2ff' },
 };
 
-// ─── Hardcoded coaching when no AI available ───
-const COACHING = {
-  stale: (item) => `You've looked at "${item.text}" ${item.staleness} times without acting. That's data. Either the next action isn't concrete enough, or you don't actually want to do this. Which is it?`,
-  fire: (item) => {
-    const d = item.deadline ? daysBetween(todayStr(), item.deadline) : null;
-    return d !== null && d <= 2
-      ? `"${item.text}" is due ${d <= 0 ? 'in the past' : 'in ' + d + ' day(s)'}. What is the single next physical action? Not "work on it" — what do you literally do with your hands?`
-      : `You marked "${item.text}" as a fire. Is it still actually burning, or has the urgency passed and inertia is keeping it in the fire lane?`;
-  },
-  quick: (item) => `You estimated "${item.text}" at ${item.estimatedMinutes} minutes. That's shorter than the time you've spent looking at it in reviews. What's really blocking you?`,
-  old: (item) => `"${item.text}" has been open for ${daysBetween(item.createdAt, isoNow())} days. What would actually happen — concretely — if you never did this?`,
-  overcommit: (count) => `You have ${count} active loops against a capacity of ${CAPACITY}. You are over-committed. This is not sustainable. What's the weakest link — the one that would hurt least to kill?`,
-  external: (item) => `You promised "${item.text}" to ${item.promisedTo || 'someone'}. Is this still yours to carry, or can you renegotiate the commitment? Sometimes a 2-minute message saying "I can't do this" closes the loop.`,
-  default: (item) => {
-    const prompts = [
-      'Is this your loop, or did someone else put it on you?',
-      'If you had to explain to a friend why this matters, what would you say?',
-      'What would you tell a friend who had this on their list for this long?',
-      'Are you keeping this because it matters, or because killing it feels like failure?',
-      'What is the very next thing your hands would do to move this forward?',
-      `Imagine it's 3 months from now and "${item.text}" is still on this list. How does that feel?`,
-      'Is the version of this task in your head actually the same as what needs to happen in reality?',
-    ];
-    return prompts[Math.floor(Math.random() * prompts.length)];
-  }
-};
+function lsGet(k, fb) { try { const v = localStorage.getItem(LS(k)); return v ? JSON.parse(v) : fb; } catch { return fb; } }
+function lsSet(k, v) { localStorage.setItem(LS(k), JSON.stringify(v)); }
+const loadItems = () => lsGet('items', []);
+const saveItems = i => lsSet('items', i);
+const loadStats = () => lsGet('stats', { opened: 0, closed: 0 });
+const saveStats = s => lsSet('stats', s);
+const loadSettings = () => lsGet('settings', { apiKey: '', provider: 'anthropic', model: 'claude-haiku-4-5-20251001' });
+const saveSettings = s => lsSet('settings', s);
+const loadChat = id => lsGet('chat-' + id, []);
+const saveChat = (id, m) => lsSet('chat-' + id, m);
+const loadPad = id => lsGet('pad-' + id, { text: '', visible: true });
+const savePad = (id, p) => lsSet('pad-' + id, p);
 
-function getAutoCoach(item, activeCount) {
-  if (activeCount > CAPACITY) return COACHING.overcommit(activeCount);
-  if (item.staleness >= 3) return COACHING.stale(item);
-  if (item.category === 'fire') return COACHING.fire(item);
-  if (item.estimatedMinutes && item.estimatedMinutes <= 5) return COACHING.quick(item);
-  if (daysBetween(item.createdAt, isoNow()) > 14) return COACHING.old(item);
-  if (item.externalCommitment) return COACHING.external(item);
-  return COACHING.default(item);
+const COACH = {
+  stale: i => `You've looked at "${i.text}" ${i.staleness} times without acting. That's data.`,
+  fire: i => { const d = i.deadline ? daysBetween(todayStr(), i.deadline) : null; return d !== null && d <= 2 ? `"${i.text}" is due ${d<=0?'in the past':'in '+d+' day(s)'}. What's the literal next physical action?` : `You marked "${i.text}" as a fire. Still burning?`; },
+  quick: i => `You estimated "${i.text}" at ${i.estimatedMinutes} min. Why hasn't it happened?`,
+  old: i => `"${i.text}" has been open ${daysBetween(i.createdAt, isoNow())} days. What happens if you never do it?`,
+  over: n => `${n} active loops, capacity ~${CAPACITY}. Something has to give.`,
+  ext: i => `Promised "${i.text}" to ${i.promisedTo||'someone'}. Can you renegotiate?`,
+  def: () => ['Is this your loop or someone else\'s?','What would you tell a friend with this on their list?','Keeping it because it matters, or because killing feels like failure?','What\'s the very next thing your hands do?'][Math.floor(Math.random()*4)]
+};
+function autoCoach(item, n) {
+  if (n > CAPACITY) return COACH.over(n);
+  if (item.staleness >= 3) return COACH.stale(item);
+  if (item.category === 'fire') return COACH.fire(item);
+  if (item.estimatedMinutes && item.estimatedMinutes <= 5) return COACH.quick(item);
+  if (daysBetween(item.createdAt, isoNow()) > 14) return COACH.old(item);
+  if (item.externalCommitment) return COACH.ext(item);
+  return COACH.def();
 }
 
-// ─── AI Call (optional) ───
-async function callAI(item, items) {
-  const settings = loadSettings();
-  if (!settings.apiKey) return null;
+function buildSysPrompt(item, pad) {
+  let s = `You are a direct, emotionally intelligent productivity coach. You help people close open loops. Killing a commitment is as valid as completing it. Be honest and caring. Keep responses concise.
 
-  const activeCount = items.filter(i => ['active','waiting'].includes(i.status)).length;
-  const context = `The user has an open loop: "${item.text}"
-Category: ${item.category || 'uncategorized'}
-Status: ${item.status}
-Created: ${daysBetween(item.createdAt, isoNow())} days ago
-Staleness (reviews without progress): ${item.staleness}
-Estimated time: ${item.estimatedMinutes ? item.estimatedMinutes + ' minutes' : 'unknown'}
-Next action: ${item.nextAction || 'undefined'}
-Deadline: ${item.deadline || 'none'}
-${item.promisedTo ? 'Promised to: ' + item.promisedTo : ''}
-${item.waitingOn ? 'Waiting on: ' + item.waitingOn : ''}
+LOOP: "${item.text}"
+Category: ${item.category||'?'} | Status: ${item.status} | Age: ${daysBetween(item.createdAt,isoNow())}d | Staleness: ${item.staleness}
+Est: ${item.estimatedMinutes?item.estimatedMinutes+'m':'?'} | Next action: ${item.nextAction||'undefined'}
+Deadline: ${item.deadline||'none'}${item.promisedTo?' | Promised to: '+item.promisedTo:''}${item.waitingOn?' | Waiting on: '+item.waitingOn:''}`;
+  if (pad && pad.visible && pad.text.trim()) s += `\n\nUSER'S SCRATCHPAD (shared with you):\n${pad.text}`;
+  s += `\n\nEnd your response with a line: SUGGESTED_ACTION: <concrete next physical action>. If none yet, write SUGGESTED_ACTION: none`;
+  return s;
+}
 
-They currently have ${activeCount} active loops (capacity ~${CAPACITY}).
-
-Ask 1-2 pointed questions to help them decide whether to DO this, DELEGATE it, DEFER it with a specific trigger, or KILL it. Be direct and honest. If they clearly should kill it, say so. If it's genuinely important, help them identify the single next physical action. Don't be nice for the sake of being nice. Be the friend who tells you what you need to hear.`;
-
-  const systemMsg = "You are a direct, emotionally intelligent productivity coach. You help people close open loops. You believe killing a commitment is just as valid as completing it. You ask uncomfortable but caring questions. Keep responses under 100 words. No bullet points.";
-
+async function callAI(messages, model, sysPrompt) {
+  // 1. Try keyless (artifact context)
   try {
-    if (settings.provider === 'anthropic') {
-      const model = settings.model || 'claude-sonnet-4-20250514';
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': settings.apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 500,
-          system: systemMsg,
-          messages: [{ role: 'user', content: context }],
-        }),
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, max_tokens: 1000, system: sysPrompt, messages }),
+    });
+    if (r.ok) { const d = await r.json(); return d.content?.map(b=>b.text||'').join('\n') || null; }
+  } catch {}
+  // 2. API key
+  const st = loadSettings();
+  if (!st.apiKey) return null;
+  try {
+    if (st.provider === 'openai') {
+      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + st.apiKey },
+        body: JSON.stringify({ model: st.model || 'gpt-4o', max_tokens: 1000, messages: [{ role: 'system', content: sysPrompt }, ...messages] }),
       });
-      const data = await res.json();
-      if (data.error) return 'API error: ' + (data.error.message || JSON.stringify(data.error));
-      return data.content?.[0]?.text || 'No response.';
-    } else if (settings.provider === 'openai') {
-      const model = settings.model || 'gpt-4o';
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      const d = await r.json(); return d.error ? 'Error: '+d.error.message : d.choices?.[0]?.message?.content || null;
+    } else {
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + settings.apiKey,
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 500,
-          messages: [
-            { role: 'system', content: systemMsg },
-            { role: 'user', content: context },
-          ],
-        }),
+        headers: { 'Content-Type': 'application/json', 'x-api-key': st.apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        body: JSON.stringify({ model: model || st.model, max_tokens: 1000, system: sysPrompt, messages }),
       });
-      const data = await res.json();
-      if (data.error) return 'API error: ' + (data.error.message || JSON.stringify(data.error));
-      return data.choices?.[0]?.message?.content || 'No response.';
+      const d = await r.json(); return d.error ? 'Error: '+(d.error.message||JSON.stringify(d.error)) : d.content?.map(b=>b.text||'').join('\n') || null;
     }
-  } catch (e) {
-    return 'Connection failed: ' + e.message;
-  }
-  return null;
+  } catch (e) { return 'Connection failed: ' + e.message; }
 }
+const extractSuggestion = t => { const m = t.match(/SUGGESTED_ACTION:\s*(.+)/i); return m && m[1].trim().toLowerCase() !== 'none' ? m[1].trim() : null; };
+const stripSuggestion = t => t.replace(/\n?SUGGESTED_ACTION:\s*.+/i, '').trim();
 
-// ─── State ───
-let state = {
-  items: loadItems(),
-  stats: loadStats(),
-  view: 'dump',
-  reviewQueue: [],
-  reviewIdx: 0,
-  coachMsg: '',
-  coachLoading: false,
-  filter: 'active',
-  editing: null,
-  editingFrom: null,
+// State
+let S = {
+  items: loadItems(), stats: loadStats(), view: 'dump',
+  reviewQueue: [], reviewIdx: 0, filter: 'active',
+  editing: null, editingFrom: null,
+  chatItem: null, chatFrom: null, chatModel: loadSettings().model || MODELS[0].id,
+  chatLoading: false, editingMsgIdx: null,
 };
+const getActive = () => S.items.filter(i => ['active','waiting'].includes(i.status));
+const getInbox = () => S.items.filter(i => i.status === 'inbox');
+const getClosed = () => S.items.filter(i => ['done','killed'].includes(i.status));
 
-function getActive() { return state.items.filter(i => ['active','waiting'].includes(i.status)); }
-function getInbox() { return state.items.filter(i => i.status === 'inbox'); }
-function getShelved() { return state.items.filter(i => i.status === 'shelved'); }
-function getClosed() { return state.items.filter(i => ['done','killed'].includes(i.status)); }
-
-function updateItem(id, changes) {
-  state.items = state.items.map(i => i.id === id ? { ...i, ...changes } : i);
-  saveItems(state.items);
+function updateItem(id, ch) { S.items = S.items.map(i => i.id===id?{...i,...ch}:i); saveItems(S.items); }
+function closeItem(id, st, reason) {
+  const ch = { status: st, lastReviewed: isoNow() }; if (reason) ch.killedReason = reason;
+  S.items = S.items.map(i => i.id===id?{...i,...ch}:i); S.stats.closed++; saveItems(S.items); saveStats(S.stats);
 }
+function addItems(ns) { S.items = [...S.items, ...ns]; S.stats.opened += ns.length; saveItems(S.items); saveStats(S.stats); }
 
-function closeItem(id, status, reason) {
-  const changes = { status, lastReviewed: isoNow() };
-  if (reason) changes.killedReason = reason;
-  state.items = state.items.map(i => i.id === id ? { ...i, ...changes } : i);
-  state.stats.closed++;
-  saveItems(state.items);
-  saveStats(state.stats);
-}
-
-function addItems(newOnes) {
-  state.items = [...state.items, ...newOnes];
-  state.stats.opened += newOnes.length;
-  saveItems(state.items);
-  saveStats(state.stats);
-}
-
-function buildReviewQueue() {
-  const q = [];
-  const added = new Set();
-  const push = (item) => { if (!added.has(item.id)) { added.add(item.id); q.push(item); } };
-
-  // Fires
-  state.items.filter(i => i.status === 'active' && i.category === 'fire').forEach(push);
-  // Past deadline
-  state.items.filter(i => i.status === 'active' && i.deadline && i.deadline <= todayStr() && i.category !== 'fire').forEach(push);
-  // Stale
-  state.items.filter(i => i.status === 'active' && i.staleness >= 3).forEach(push);
-  // Shelved past review
-  state.items.filter(i => i.status === 'shelved' && i.reviewDate && i.reviewDate <= todayStr()).forEach(push);
-  // Waiting past review
-  state.items.filter(i => i.status === 'waiting' && i.reviewDate && i.reviewDate <= todayStr()).forEach(push);
-  // Remaining active
-  state.items.filter(i => i.status === 'active').forEach(push);
-  // Inbox
-  state.items.filter(i => i.status === 'inbox').forEach(push);
-
+function buildQueue() {
+  const q=[], a=new Set(), p=i=>{if(!a.has(i.id)){a.add(i.id);q.push(i);}};
+  S.items.filter(i=>i.status==='active'&&i.category==='fire').forEach(p);
+  S.items.filter(i=>i.status==='active'&&i.deadline&&i.deadline<=todayStr()&&i.category!=='fire').forEach(p);
+  S.items.filter(i=>i.status==='active'&&i.staleness>=3).forEach(p);
+  S.items.filter(i=>i.status==='shelved'&&i.reviewDate&&i.reviewDate<=todayStr()).forEach(p);
+  S.items.filter(i=>i.status==='waiting'&&i.reviewDate&&i.reviewDate<=todayStr()).forEach(p);
+  S.items.filter(i=>i.status==='active').forEach(p);
+  S.items.filter(i=>i.status==='inbox').forEach(p);
   return q;
 }
 
-// ─── Render ───
-function h(tag, attrs, ...children) {
+function h(tag, attrs, ...ch) {
   const el = document.createElement(tag);
-  if (attrs) {
-    for (const [k, v] of Object.entries(attrs)) {
-      if (k === 'className') el.className = v;
-      else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
-      else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
-      else el.setAttribute(k, v);
-    }
+  if (attrs) for (const [k,v] of Object.entries(attrs)) {
+    if (v==null) continue;
+    if (k==='className') el.className=v;
+    else if (k==='style'&&typeof v==='object') Object.assign(el.style,v);
+    else if (k.startsWith('on')&&typeof v==='function') el.addEventListener(k.slice(2).toLowerCase(),v);
+    else el.setAttribute(k,v);
   }
-  for (const c of children) {
-    if (c == null || c === false) continue;
-    if (typeof c === 'string' || typeof c === 'number') el.appendChild(document.createTextNode(c));
-    else if (Array.isArray(c)) c.forEach(cc => { if (cc) el.appendChild(cc); });
-    else el.appendChild(c);
+  for (const c of ch.flat(Infinity)) {
+    if (c==null||c===false) continue;
+    el.appendChild(typeof c==='string'||typeof c==='number' ? document.createTextNode(c) : c);
   }
   return el;
 }
 
 function render() {
-  const app = document.getElementById('app');
-  app.innerHTML = '';
+  const app = document.getElementById('app'); app.innerHTML = '';
+  const active = getActive(), inbox = getInbox(), closed = getClosed();
+  const open = S.items.filter(i => !['done','killed'].includes(i.status));
 
-  const active = getActive();
-  const inbox = getInbox();
-  const closed = getClosed();
-  const open = state.items.filter(i => !['done','killed'].includes(i.status));
-
-  // Re-entry check
-  const lastVisit = localStorage.getItem('loop-closer-last-visit');
-  const daysSince = lastVisit ? daysBetween(lastVisit, isoNow()) : 0;
-  localStorage.setItem('loop-closer-last-visit', isoNow());
-
-  if (daysSince >= 3 && state.view === 'dump' && open.length > 0) {
-    const msgs = [
-      { d: 3, text: `${daysSince} days since you were here. That's fine. You're here now. Want to do a quick review?` },
-      { d: 7, text: `It's been ${daysSince} days. The list didn't grow while you were gone — that's the nice thing about a system that waits for you. Pick up where you left off.` },
-      { d: 14, text: `${daysSince} days away. No judgment — avoidance is data, not failure. You probably have some loops worth killing. A review will feel better than you think.` },
-      { d: 30, text: `It's been ${daysSince} days. Half the things on your list probably don't matter anymore, and that's genuinely good news. Let's do a quick cull.` },
-    ];
-    const msg = [...msgs].reverse().find(m => daysSince >= m.d);
-    if (msg) {
-      app.appendChild(h('div', {
-        style: {
-          padding: '14px 16px', background: '#f0fdf4', border: '1px solid #bbf7d0',
-          borderRadius: 10, marginBottom: 16, fontSize: '14px', color: '#065f46', lineHeight: '1.5',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px',
-        }
-      },
-        h('span', null, msg.text),
-        h('button', {
-          className: 'btn', style: { background: '#059669', color: '#fff', flexShrink: '0', fontSize: '12px', padding: '6px 14px' },
-          onClick: () => {
-            state.reviewQueue = buildReviewQueue();
-            state.reviewIdx = 0;
-            state.coachMsg = '';
-            state.view = 'review';
-            render();
-          }
-        }, '→ Review'),
-      ));
-    }
+  // Re-entry
+  const lv = localStorage.getItem(LS('last-visit'));
+  const ds = lv ? daysBetween(lv, isoNow()) : 0;
+  localStorage.setItem(LS('last-visit'), isoNow());
+  if (ds >= 3 && S.view === 'dump' && open.length > 0) {
+    const msgs = [{d:3,t:`${ds} days away. That's fine. You're here now.`},{d:7,t:`${ds} days. The list waited for you.`},{d:14,t:`${ds} days. Avoidance is data, not failure.`},{d:30,t:`${ds} days. Half your list probably doesn't matter anymore — good news.`}];
+    const msg = [...msgs].reverse().find(m => ds >= m.d);
+    if (msg) app.appendChild(h('div', { style: { padding:'14px 16px',background:'#f0fdf4',border:'1px solid #bbf7d0',borderRadius:'10px',marginBottom:'16px',fontSize:'14px',color:'#065f46',lineHeight:'1.5',display:'flex',justifyContent:'space-between',alignItems:'center',gap:'12px' } },
+      h('span',null,msg.t), h('button',{className:'btn btn-sm',style:{background:'#059669',color:'#fff',flexShrink:'0'},onClick:()=>{S.reviewQueue=buildQueue();S.reviewIdx=0;S.view='review';render();}},'→ Review')));
   }
 
-  // Header
-  const header = h('div', { className: 'header' },
-    h('div', { className: 'header-top' },
-      h('h1', null, 'Loop Closer'),
-      h('div', { className: 'header-stats' },
-        h('span', { className: 'closed' }, state.stats.closed + ' closed'),
-        h('span', null, open.length + ' open'),
-        h('button', { className: 'gear-btn', onClick: () => { state.view = 'settings'; render(); } }, '⚙'),
-      ),
-    ),
-    renderCapBar(active.length),
-  );
-  app.appendChild(header);
-
-  // Nav
-  const navItems = [
-    { key: 'dump', label: '📥 Dump' },
-    { key: 'process', label: '⚡ Process' + (inbox.length ? ` (${inbox.length})` : '') },
-    { key: 'review', label: '🔍 Review', action: true },
-    { key: 'loops', label: '📋 All Loops' },
-  ];
-  const nav = h('div', { className: 'nav' },
-    ...navItems.map(n => h('button', {
-      className: state.view === n.key ? 'active' : '',
-      onClick: () => {
-        if (n.action) {
-          state.reviewQueue = buildReviewQueue();
-          state.reviewIdx = 0;
-          state.coachMsg = '';
-        }
-        state.view = n.key;
-        render();
-      }
-    }, n.label))
-  );
-  app.appendChild(nav);
-
-  // Overcapacity warning
-  if (active.length > CAPACITY && state.view !== 'review') {
-    app.appendChild(h('div', { className: 'warning' },
-      `You have ${active.length} active loops. You can handle ~${CAPACITY}. Something needs to be killed or shelved.`
-    ));
-  }
-
-  // Views
-  if (state.editing) app.appendChild(renderEdit());
-  else if (state.view === 'export') app.appendChild(renderExport());
-  else if (state.view === 'dump') app.appendChild(renderDump());
-  else if (state.view === 'process') app.appendChild(renderProcess());
-  else if (state.view === 'review') app.appendChild(renderReview());
-  else if (state.view === 'loops') app.appendChild(renderList());
-  else if (state.view === 'settings') app.appendChild(renderSettings());
-}
-
-// ─── Edit View ───
-function renderEdit() {
-  const item = state.items.find(i => i.id === state.editing);
-  if (!item) { state.editing = null; render(); return h('div'); }
-
-  const meta = item.category ? CATEGORIES[item.category] : null;
-  const age = daysBetween(item.createdAt, isoNow());
-  let selectedCat = item.category;
-  let selectedStatus = item.status;
-
-  const wrap = h('div');
-  const card = h('div', { className: 'card' });
-
-  // Header
-  card.appendChild(h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' } },
-    h('span', { style: { fontSize: '12px', color: '#9ca3af' } }, 'Editing · ' + age + 'd old'),
-    h('button', {
-      className: 'btn btn-ghost', style: { fontSize: '12px', padding: '4px 12px' },
-      onClick: () => {
-        state.editing = null;
-        if (state.editingFrom === 'review') state.view = 'review';
-        state.editingFrom = null;
-        render();
-      }
-    }, '← Back'),
+  app.appendChild(h('div',{className:'header'},
+    h('div',{className:'header-top'}, h('h1',null,'Loop Closer'),
+      h('div',{className:'header-stats'}, h('span',{className:'closed'},S.stats.closed+' closed'), h('span',null,open.length+' open'),
+        h('button',{className:'gear-btn',onClick:()=>{S.view='settings';render();}},'⚙'))),
+    (() => { const r=Math.min(active.length/CAPACITY,1.5),c=r>1?'#dc2626':r>0.8?'#d97706':'#059669';
+      return h('div',{className:'cap-bar'},h('div',{className:'cap-labels'},h('span',null,active.length+' active'),h('span',null,'capacity ~'+CAPACITY)),h('div',{className:'cap-track'},h('div',{className:'cap-fill',style:{width:Math.min(r*100,100)+'%',background:c}}))); })()
   ));
 
-  // Text
-  card.appendChild(h('label', { className: 'label' }, 'Loop'));
-  const textInput = h('input', { className: 'input input-full mb-16', type: 'text', value: item.text });
-  card.appendChild(textInput);
+  const navs = [{k:'dump',l:'📥 Dump'},{k:'process',l:'⚡ Process'+(inbox.length?` (${inbox.length})`:'')} ,{k:'review',l:'🔍 Review',a:()=>{S.reviewQueue=buildQueue();S.reviewIdx=0;}},{k:'loops',l:'📋 All'},{k:'export',l:'📤 Export'}];
+  app.appendChild(h('div',{className:'nav'},...navs.map(n=>h('button',{className:S.view===n.k?'active':'',onClick:()=>{if(n.a)n.a();S.view=n.k;render();}},n.l))));
 
-  // Category
-  card.appendChild(h('label', { className: 'label' }, 'Category'));
-  const pillsDiv = h('div', { className: 'pills mb-16' });
-  for (const [key, m] of Object.entries(CATEGORIES)) {
-    const pill = h('button', {
-      className: 'pill',
-      style: {
-        background: selectedCat === key ? m.color : m.bg,
-        color: selectedCat === key ? '#fff' : m.color,
-        borderColor: m.color,
-      },
-      onClick: () => {
-        selectedCat = key;
-        pillsDiv.querySelectorAll('.pill').forEach(p => {
-          const k = p.dataset.key;
-          const cm = CATEGORIES[k];
-          p.style.background = k === key ? cm.color : cm.bg;
-          p.style.color = k === key ? '#fff' : cm.color;
-        });
-      },
-    }, m.icon + ' ' + m.label);
-    pill.dataset.key = key;
-    pillsDiv.appendChild(pill);
-  }
-  card.appendChild(pillsDiv);
+  if (active.length > CAPACITY && !['review','chat'].includes(S.view))
+    app.appendChild(h('div',{className:'warning'},`${active.length} active loops. Capacity ~${CAPACITY}. Kill or shelve.`));
 
-  // Status
-  card.appendChild(h('label', { className: 'label' }, 'Status'));
-  const statusDiv = h('div', { className: 'pills mb-16' });
-  const statuses = ['active', 'waiting', 'shelved', 'inbox'];
-  for (const s of statuses) {
-    const pill = h('button', {
-      className: 'pill',
-      style: {
-        background: selectedStatus === s ? '#6366f1' : '#eef2ff',
-        color: selectedStatus === s ? '#fff' : '#6366f1',
-        borderColor: '#6366f1',
-      },
-      onClick: () => {
-        selectedStatus = s;
-        statusDiv.querySelectorAll('.pill').forEach(p => {
-          const k = p.dataset.key;
-          p.style.background = k === s ? '#6366f1' : '#eef2ff';
-          p.style.color = k === s ? '#fff' : '#6366f1';
-        });
-      },
-    }, s);
-    pill.dataset.key = s;
-    statusDiv.appendChild(pill);
-  }
-  card.appendChild(statusDiv);
-
-  // Next action
-  card.appendChild(h('label', { className: 'label' }, 'Next physical action'));
-  const nextInput = h('input', { className: 'input input-full mb-16', type: 'text', value: item.nextAction || '', placeholder: 'e.g. Open Gmail, search for confirmation' });
-  card.appendChild(nextInput);
-
-  // Estimate
-  card.appendChild(h('label', { className: 'label' }, 'Estimated minutes'));
-  const estInput = h('input', { className: 'input mb-16', type: 'number', value: item.estimatedMinutes || '', placeholder: 'e.g. 15', style: { width: '120px' } });
-  card.appendChild(estInput);
-
-  // Row: deadline + promised + waiting + review date
-  const row1 = h('div', { className: 'flex-row mb-16' });
-  const deadDiv = h('div', null, h('label', { className: 'label' }, 'Deadline'));
-  const deadInput = h('input', { className: 'input input-full', type: 'date', value: item.deadline || '' });
-  deadDiv.appendChild(deadInput);
-  row1.appendChild(deadDiv);
-  const promDiv = h('div', null, h('label', { className: 'label' }, 'Promised to'));
-  const promInput = h('input', { className: 'input input-full', type: 'text', value: item.promisedTo || '', placeholder: 'e.g. Dad' });
-  promDiv.appendChild(promInput);
-  row1.appendChild(promDiv);
-  card.appendChild(row1);
-
-  const row2 = h('div', { className: 'flex-row mb-16' });
-  const waitDiv = h('div', null, h('label', { className: 'label' }, 'Waiting on'));
-  const waitInput = h('input', { className: 'input input-full', type: 'text', value: item.waitingOn || '', placeholder: 'e.g. Reply from X' });
-  waitDiv.appendChild(waitInput);
-  row2.appendChild(waitDiv);
-  const revDiv = h('div', null, h('label', { className: 'label' }, 'Review date (for shelved)'));
-  const revInput = h('input', { className: 'input input-full', type: 'date', value: item.reviewDate || '' });
-  revDiv.appendChild(revInput);
-  row2.appendChild(revDiv);
-  card.appendChild(row2);
-
-  // Action buttons
-  const actions = h('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap' } });
-
-  actions.appendChild(h('button', {
-    className: 'btn btn-primary',
-    onClick: () => {
-      updateItem(item.id, {
-        text: textInput.value,
-        category: selectedCat,
-        status: selectedStatus,
-        nextAction: nextInput.value,
-        estimatedMinutes: estInput.value ? Number(estInput.value) : null,
-        deadline: deadInput.value,
-        promisedTo: promInput.value,
-        externalCommitment: !!promInput.value,
-        waitingOn: waitInput.value,
-        reviewDate: revInput.value,
-        lastReviewed: isoNow(),
-      });
-      state.editing = null;
-      if (state.editingFrom === 'review') { state.view = 'review'; }
-      state.editingFrom = null;
-      render();
-    }
-  }, 'Save'));
-
-  actions.appendChild(h('button', {
-    className: 'btn btn-green',
-    onClick: () => {
-      closeItem(item.id, 'done');
-      state.editing = null;
-      if (state.editingFrom === 'review') { state.reviewIdx++; state.coachMsg = ''; state.view = 'review'; }
-      state.editingFrom = null;
-      render();
-    }
-  }, '✓ Done'));
-
-  actions.appendChild(h('button', {
-    className: 'btn btn-kill',
-    onClick: () => {
-      const reason = prompt('Why are you killing it?');
-      closeItem(item.id, 'killed', reason || 'No reason given');
-      state.editing = null;
-      if (state.editingFrom === 'review') { state.reviewIdx++; state.coachMsg = ''; state.view = 'review'; }
-      state.editingFrom = null;
-      render();
-    }
-  }, '✕ Kill'));
-
-  actions.appendChild(h('button', {
-    className: 'btn btn-ghost', style: { marginLeft: 'auto' },
-    onClick: () => {
-      if (confirm('Permanently delete "' + item.text + '"? (This is different from killing — it won\'t appear in your closed list.)')) {
-        state.items = state.items.filter(i => i.id !== item.id);
-        saveItems(state.items);
-        state.editing = null;
-        if (state.editingFrom === 'review') { state.reviewIdx++; state.coachMsg = ''; state.view = 'review'; }
-        state.editingFrom = null;
-        render();
-      }
-    }
-  }, '🗑 Delete'));
-
-  card.appendChild(actions);
-  wrap.appendChild(card);
-  return wrap;
+  const V = {dump:renderDump,process:renderProcess,review:renderReview,loops:renderList,export:renderExport,settings:renderSettings,edit:renderEdit,chat:renderChat};
+  if (V[S.view]) app.appendChild(V[S.view]());
 }
 
-function renderCapBar(activeCount) {
-  const ratio = Math.min(activeCount / CAPACITY, 1.5);
-  const color = ratio > 1 ? '#dc2626' : ratio > 0.8 ? '#d97706' : '#059669';
-  return h('div', { className: 'cap-bar' },
-    h('div', { className: 'cap-labels' },
-      h('span', null, activeCount + ' active'),
-      h('span', null, 'capacity ~' + CAPACITY),
-    ),
-    h('div', { className: 'cap-track' },
-      h('div', { className: 'cap-fill', style: { width: Math.min(ratio * 100, 100) + '%', background: color } }),
-    ),
-  );
-}
-
-// ─── Export View ───
-function renderExport() {
-  const wrap = h('div');
-  const card = h('div', { className: 'card' });
-
-  card.appendChild(h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' } },
-    h('h2', { style: { fontSize: '20px', fontWeight: '600' } }, 'Select items to export'),
-    h('button', { className: 'btn btn-ghost', style: { fontSize: '12px', padding: '4px 12px' }, onClick: () => { state.view = 'settings'; render(); } }, '← Back'),
-  ));
-
-  card.appendChild(h('p', { style: { fontSize: '13px', color: '#6b7280', marginBottom: '16px' } },
-    'Pick which loops to include. Use this to share non-sensitive items with Claude for review, or to back up selectively.'
-  ));
-
-  const selected = new Set();
-  const openItems = state.items.filter(i => !['done', 'killed'].includes(i.status));
-
-  // Select all / none
-  const controlRow = h('div', { style: { display: 'flex', gap: '8px', marginBottom: '12px' } });
-  controlRow.appendChild(h('button', {
-    className: 'btn btn-ghost', style: { fontSize: '12px', padding: '4px 12px' },
-    onClick: () => {
-      const checkboxes = card.querySelectorAll('.export-cb');
-      checkboxes.forEach(cb => { cb.checked = true; selected.add(cb.dataset.id); });
-      countLabel.textContent = selected.size + ' selected';
-    }
-  }, 'Select all'));
-  controlRow.appendChild(h('button', {
-    className: 'btn btn-ghost', style: { fontSize: '12px', padding: '4px 12px' },
-    onClick: () => {
-      const checkboxes = card.querySelectorAll('.export-cb');
-      checkboxes.forEach(cb => { cb.checked = false; });
-      selected.clear();
-      countLabel.textContent = '0 selected';
-    }
-  }, 'Select none'));
-  const countLabel = h('span', { style: { fontSize: '12px', color: '#9ca3af', marginLeft: 'auto', alignSelf: 'center' } }, '0 selected');
-  controlRow.appendChild(countLabel);
-  card.appendChild(controlRow);
-
-  // Item list with checkboxes
-  const list = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '400px', overflowY: 'auto', marginBottom: '16px' } });
-  for (const item of openItems) {
-    const meta = item.category ? CATEGORIES[item.category] : null;
-    const row = h('label', {
-      style: {
-        display: 'flex', gap: '10px', alignItems: 'center', padding: '8px 10px',
-        background: '#f9fafb', borderRadius: '6px', cursor: 'pointer', fontSize: '14px',
-        borderLeft: meta ? '3px solid ' + meta.color : '3px solid #e5e7eb',
-      }
-    });
-    const cb = h('input', { type: 'checkbox', className: 'export-cb', style: { flexShrink: '0' } });
-    cb.dataset.id = item.id;
-    cb.addEventListener('change', () => {
-      if (cb.checked) selected.add(item.id);
-      else selected.delete(item.id);
-      countLabel.textContent = selected.size + ' selected';
-    });
-    row.appendChild(cb);
-    row.appendChild(h('span', null, (meta ? meta.icon + ' ' : '') + item.text));
-    if (item.staleness > 0) row.appendChild(h('span', { style: { fontSize: '11px', color: '#d97706', marginLeft: 'auto', flexShrink: '0' } }, 'stale×' + item.staleness));
-    list.appendChild(row);
-  }
-  // Also show closed items in a collapsed section
-  const closedItems = state.items.filter(i => ['done', 'killed'].includes(i.status));
-  if (closedItems.length) {
-    const toggle = h('button', {
-      className: 'btn btn-ghost', style: { fontSize: '12px', padding: '4px 12px', marginTop: '8px', marginBottom: '4px' },
-      onClick: () => {
-        closedList.style.display = closedList.style.display === 'none' ? 'flex' : 'none';
-        toggle.textContent = closedList.style.display === 'none' ? 'Show ' + closedItems.length + ' closed' : 'Hide closed';
-      }
-    }, 'Show ' + closedItems.length + ' closed');
-    list.appendChild(toggle);
-    const closedList = h('div', { style: { display: 'none', flexDirection: 'column', gap: '6px' } });
-    for (const item of closedItems) {
-      const row = h('label', {
-        style: { display: 'flex', gap: '10px', alignItems: 'center', padding: '8px 10px', background: '#f3f4f6', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', opacity: '0.6' }
-      });
-      const cb = h('input', { type: 'checkbox', className: 'export-cb', style: { flexShrink: '0' } });
-      cb.dataset.id = item.id;
-      cb.addEventListener('change', () => {
-        if (cb.checked) selected.add(item.id);
-        else selected.delete(item.id);
-        countLabel.textContent = selected.size + ' selected';
-      });
-      row.appendChild(cb);
-      row.appendChild(h('span', { style: { textDecoration: 'line-through' } }, (item.status === 'killed' ? '✕ ' : '✓ ') + item.text));
-      closedList.appendChild(row);
-    }
-    list.appendChild(closedList);
-  }
-  card.appendChild(list);
-
-  // Include stats checkbox
-  const statsRow = h('label', { style: { display: 'flex', gap: '10px', alignItems: 'center', fontSize: '13px', color: '#6b7280', marginBottom: '16px' } });
-  const statsCb = h('input', { type: 'checkbox', checked: true });
-  statsRow.appendChild(statsCb);
-  statsRow.appendChild(h('span', null, 'Include stats (opened/closed counts)'));
-  card.appendChild(statsRow);
-
-  // Export button
-  card.appendChild(h('button', {
-    className: 'btn btn-primary btn-full',
-    onClick: () => {
-      if (selected.size === 0) { alert('Select at least one item.'); return; }
-      const exportItems = state.items.filter(i => selected.has(i.id));
-      const payload = { format: 'loop-closer-v1', exportedAt: isoNow(), items: exportItems };
-      if (statsCb.checked) payload.stats = state.stats;
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'loops-' + todayStr() + '.json';
-      a.click(); URL.revokeObjectURL(url);
-    }
-  }, 'Export ' + '→'));
-
-  wrap.appendChild(card);
-  return wrap;
-}
-
-// ─── Dump View ───
 function renderDump() {
-  const wrap = h('div', null,
-    h('h2', { style: { fontSize: '20px', fontWeight: '600', marginBottom: '4px' } }, 'Brain dump'),
-    h('p', { style: { color: '#6b7280', fontSize: '14px', marginBottom: '16px' } },
-      "Get it out of your head. One thing per line. Don't organize, don't prioritize. Just dump."
-    ),
-  );
-
-  const ta = h('textarea', {
-    className: 'textarea',
-    placeholder: "Email dad about reimbursement\nFinish USYD enrollment thing\nThat API bug in the kiosk\nCall dentist\n...",
-  });
-  wrap.appendChild(ta);
-
-  const footer = h('div', { style: { display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: '12px' } },
-    h('button', {
-      className: 'btn btn-primary',
-      style: { padding: '10px 24px', fontSize: '14px' },
-      onClick: () => {
-        const lines = ta.value.split('\n').map(l => l.trim()).filter(Boolean);
-        if (!lines.length) return;
-        const newOnes = lines.map(text => ({
-          id: genId(), text, createdAt: isoNow(), category: null, status: 'inbox',
-          nextAction: '', deadline: '', waitingOn: '', reviewDate: '',
-          staleness: 0, estimatedMinutes: null, lastReviewed: null,
-          killedReason: '', promisedTo: '', externalCommitment: false,
-        }));
-        addItems(newOnes);
-        state.view = 'process';
-        render();
-      }
-    }, 'Dump & Process →'),
-  );
-  wrap.appendChild(footer);
-  return wrap;
+  const w = h('div',null, h('h2',{style:{fontSize:'20px',fontWeight:'600',marginBottom:'4px'}},'Brain dump'),
+    h('p',{style:{color:'#6b7280',fontSize:'14px',marginBottom:'16px'}},"One thing per line. Don't organize. Dump."));
+  const ta = h('textarea',{className:'textarea',placeholder:"Email dad about reimbursement\nFinish enrollment\nThat API bug\n..."});
+  w.appendChild(ta);
+  w.appendChild(h('div',{style:{display:'flex',justifyContent:'flex-end',marginTop:'12px'}},
+    h('button',{className:'btn btn-primary',style:{padding:'10px 24px',fontSize:'14px'},onClick:()=>{
+      const lines = ta.value.split('\n').map(l=>l.trim()).filter(Boolean);
+      if (!lines.length) return;
+      addItems(lines.map(t=>({id:genId(),text:t,createdAt:isoNow(),category:null,status:'inbox',nextAction:'',deadline:'',waitingOn:'',reviewDate:'',staleness:0,estimatedMinutes:null,lastReviewed:null,killedReason:'',promisedTo:'',externalCommitment:false,aiSuggestion:''})));
+      S.view='process'; render();
+    }},'Dump & Process →')));
+  return w;
 }
 
-// ─── Process View ───
 function renderProcess() {
-  const inbox = getInbox();
-  if (!inbox.length) {
-    return h('div', { className: 'card empty' },
-      h('div', { className: 'empty-icon' }, '📭'),
-      h('h3', null, 'Inbox zero.'),
-      h('p', null, "Everything's triaged. Start a review or dump more."),
-    );
-  }
-  return renderTriageCard(inbox[0], inbox.length);
+  const ib = getInbox();
+  if (!ib.length) return h('div',{className:'card empty'},h('div',{className:'empty-icon'},'📭'),h('h3',null,'Inbox zero.'));
+  return renderTriage(ib[0], ib.length);
 }
 
-function renderTriageCard(item, remaining) {
-  let selectedCat = item.category;
-  const card = h('div', { className: 'card' });
+function renderTriage(item, rem) {
+  let cat = item.category;
+  const c = h('div',{className:'card'});
+  c.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}},
+    h('span',{style:{fontSize:'12px',color:'#9ca3af'}},rem+' in inbox'),
+    h('button',{className:'btn btn-kill btn-sm',onClick:()=>{closeItem(item.id,'killed','Killed on triage');render();}},'Kill it')));
+  c.appendChild(h('h3',{style:{fontSize:'18px',fontWeight:'600',marginBottom:'20px',lineHeight:'1.4'}},'"'+item.text+'"'));
 
-  // Header
-  card.appendChild(h('div', { className: 'triage-header' },
-    h('span', { style: { fontSize: '12px', color: '#9ca3af' } }, remaining + ' in inbox'),
-    h('button', {
-      className: 'btn btn-kill', style: { fontSize: '12px', padding: '4px 12px' },
-      onClick: () => { closeItem(item.id, 'killed', 'Killed on triage'); render(); }
-    }, 'Kill it'),
-  ));
-
-  card.appendChild(h('h3', { className: 'triage-title' }, '"' + item.text + '"'));
-
-  // Category pills
-  card.appendChild(h('label', { className: 'label' }, 'What kind of loop is this?'));
-  const pillsDiv = h('div', { className: 'pills mb-16' });
-  for (const [key, meta] of Object.entries(CATEGORIES)) {
-    const pill = h('button', {
-      className: 'pill',
-      style: {
-        background: selectedCat === key ? meta.color : (meta.bg || '#f3f4f6'),
-        color: selectedCat === key ? '#fff' : meta.color,
-        borderColor: meta.color,
-      },
-      onClick: () => {
-        selectedCat = key;
-        // Update pill styles
-        pillsDiv.querySelectorAll('.pill').forEach(p => {
-          const k = p.dataset.key;
-          const m = CATEGORIES[k];
-          p.style.background = k === key ? m.color : m.bg;
-          p.style.color = k === key ? '#fff' : m.color;
-        });
-        // Enable activate button
-        activateBtn.disabled = false;
-        activateBtn.style.background = '#4f46e5';
-      },
-    }, meta.icon + ' ' + meta.label);
-    pill.dataset.key = key;
-    pillsDiv.appendChild(pill);
+  c.appendChild(h('label',{className:'label'},'What kind of loop?'));
+  const pd = h('div',{className:'pills',style:{marginBottom:'16px'}});
+  for (const [k,m] of Object.entries(CATEGORIES)) {
+    const p = h('button',{className:'pill',style:{background:cat===k?m.color:m.bg,color:cat===k?'#fff':m.color,borderColor:m.color},onClick:()=>{
+      cat=k; pd.querySelectorAll('.pill').forEach(p=>{const k2=p.dataset.key,m2=CATEGORIES[k2];p.style.background=k2===k?m2.color:m2.bg;p.style.color=k2===k?'#fff':m2.color;});
+      ab.disabled=false;ab.style.background='#4f46e5';
+    }},m.icon+' '+m.label); p.dataset.key=k; pd.appendChild(p);
   }
-  card.appendChild(pillsDiv);
+  c.appendChild(pd);
 
-  // Estimate
-  card.appendChild(h('label', { className: 'label' }, 'How many minutes to close this loop? (Be honest.)'));
-  const estRow = h('div', { className: 'mb-16' });
-  const estInput = h('input', { className: 'input', type: 'number', placeholder: 'e.g. 15', style: { width: '120px' } });
-  const estHint = h('span', { className: 'quick-hint', style: { display: 'none' } }, '⚡ Under 5 min — just do it now?');
-  estInput.addEventListener('input', () => {
-    estHint.style.display = (estInput.value && Number(estInput.value) <= 5) ? 'inline' : 'none';
-  });
-  estRow.appendChild(estInput);
-  estRow.appendChild(estHint);
-  card.appendChild(estRow);
+  c.appendChild(h('label',{className:'label'},'Estimated minutes?'));
+  const er=h('div',{style:{marginBottom:'16px'}}), ei=h('input',{className:'input',type:'number',placeholder:'15',style:{width:'120px'}}),
+    eh=h('span',{className:'quick-hint',style:{display:'none'}},'⚡ Under 5 min — do it now?');
+  ei.addEventListener('input',()=>{eh.style.display=(ei.value&&+ei.value<=5)?'inline':'none';}); er.appendChild(ei);er.appendChild(eh);c.appendChild(er);
 
-  // Next action
-  card.appendChild(h('label', { className: 'label' }, "What's the next physical action?"));
-  const nextInput = h('input', { className: 'input input-full mb-16', type: 'text', placeholder: 'e.g. Open Gmail, search for flight confirmation' });
-  card.appendChild(nextInput);
+  c.appendChild(h('label',{className:'label'},'Next physical action?'));
+  const ni = h('input',{className:'input input-full',type:'text',placeholder:'e.g. Open Gmail, search for confirmation',style:{marginBottom:'16px'}}); c.appendChild(ni);
 
-  // Deadline + Promised
-  const row = h('div', { className: 'flex-row mb-16' });
-  const deadDiv = h('div', null, h('label', { className: 'label' }, 'Deadline?'));
-  const deadInput = h('input', { className: 'input input-full', type: 'date' });
-  deadDiv.appendChild(deadInput);
-  row.appendChild(deadDiv);
+  const r=h('div',{className:'flex-row',style:{marginBottom:'16px'}}),
+    di=h('input',{className:'input input-full',type:'date'}), pi=h('input',{className:'input input-full',type:'text',placeholder:'e.g. Dad'});
+  r.appendChild(h('div',null,h('label',{className:'label'},'Deadline?'),di));
+  r.appendChild(h('div',null,h('label',{className:'label'},'Promised to?'),pi)); c.appendChild(r);
 
-  const promDiv = h('div', null, h('label', { className: 'label' }, 'Promised to anyone?'));
-  const promInput = h('input', { className: 'input input-full', type: 'text', placeholder: "e.g. Dad, professor, nobody" });
-  promDiv.appendChild(promInput);
-  row.appendChild(promDiv);
-  card.appendChild(row);
-
-  // Activate button
-  const activateBtn = h('button', {
-    className: 'btn btn-primary btn-full',
-    disabled: !selectedCat,
-    style: { background: selectedCat ? '#4f46e5' : '#d1d5db' },
-    onClick: () => {
-      updateItem(item.id, {
-        category: selectedCat,
-        estimatedMinutes: estInput.value ? Number(estInput.value) : null,
-        nextAction: nextInput.value,
-        deadline: deadInput.value,
-        promisedTo: promInput.value,
-        externalCommitment: !!promInput.value,
-        status: 'active',
-        lastReviewed: isoNow(),
-      });
-      render();
-    }
-  }, 'Activate →');
-  card.appendChild(activateBtn);
-
-  return card;
+  const ab = h('button',{className:'btn btn-primary btn-full',disabled:!cat,style:{background:cat?'#4f46e5':'#d1d5db'},onClick:()=>{
+    updateItem(item.id,{category:cat,estimatedMinutes:ei.value?+ei.value:null,nextAction:ni.value,deadline:di.value,promisedTo:pi.value,externalCommitment:!!pi.value,status:'active',lastReviewed:isoNow()});render();
+  }},'Activate →'); c.appendChild(ab); return c;
 }
 
-// ─── Review View ───
 function renderReview() {
-  if (!state.reviewQueue.length) {
-    return h('div', { className: 'card empty' },
-      h('div', { className: 'empty-icon' }, '✨'),
-      h('h3', null, 'Nothing to review.'),
-      h('p', null, 'Your loops are either fresh or closed.'),
-    );
-  }
+  if (!S.reviewQueue.length) return h('div',{className:'card empty'},h('div',{className:'empty-icon'},'✨'),h('h3',null,'Nothing to review.'));
+  if (S.reviewIdx >= S.reviewQueue.length) return h('div',{className:'card empty'},h('div',{className:'empty-icon'},'🎯'),h('h3',null,'Review complete.'),h('p',null,'Go do the thing.'));
 
-  if (state.reviewIdx >= state.reviewQueue.length) {
-    return h('div', { className: 'card empty' },
-      h('div', { className: 'empty-icon' }, '🎯'),
-      h('h3', null, 'Review complete.'),
-      h('p', null, 'Reviewed ' + state.reviewIdx + ' loops. Go do the thing.'),
-    );
-  }
+  const qi=S.reviewQueue[S.reviewIdx], item=S.items.find(i=>i.id===qi.id);
+  if (!item||['done','killed'].includes(item.status)){S.reviewIdx++;return renderReview();}
 
-  // Re-fetch item from live state (it may have been updated)
-  const queueItem = state.reviewQueue[state.reviewIdx];
-  const item = state.items.find(i => i.id === queueItem.id);
-  if (!item || ['done','killed'].includes(item.status)) {
-    state.reviewIdx++;
-    return renderReview();
-  }
+  const age=daysBetween(item.createdAt,isoNow()),meta=item.category?CATEGORIES[item.category]:null,
+    stale=item.staleness>=3, pastDue=item.deadline&&item.deadline<todayStr(),
+    coach=autoCoach(item,getActive().length),
+    adv=()=>{S.reviewIdx++;render();};
 
-  const age = daysBetween(item.createdAt, isoNow());
-  const meta = item.category ? CATEGORIES[item.category] : null;
-  const isStale = item.staleness >= 3;
-  const isPastDue = item.deadline && item.deadline < todayStr();
-  const activeCount = getActive().length;
-  const autoCoach = getAutoCoach(item, activeCount);
-  const settings = loadSettings();
+  const w=h('div'), pct=((S.reviewIdx+1)/S.reviewQueue.length)*100;
+  w.appendChild(h('div',{className:'progress'},h('span',{className:'progress-label'},(S.reviewIdx+1)+' of '+S.reviewQueue.length),h('div',{className:'progress-track'},h('div',{className:'progress-fill',style:{width:pct+'%'}}))));
 
-  const wrap = h('div');
-
-  // Progress
-  const pct = ((state.reviewIdx + 1) / state.reviewQueue.length) * 100;
-  wrap.appendChild(h('div', { className: 'progress' },
-    h('span', { className: 'progress-label' }, (state.reviewIdx + 1) + ' of ' + state.reviewQueue.length),
-    h('div', { className: 'progress-track' },
-      h('div', { className: 'progress-fill', style: { width: pct + '%' } }),
-    ),
-  ));
-
-  const card = h('div', {
-    className: 'card',
-    style: {
-      borderLeft: meta ? '4px solid ' + meta.color : undefined,
-      background: isPastDue ? '#fef2f2' : isStale ? '#fffbeb' : '#fff',
-    }
-  });
-
-  // Tags
-  const tags = h('div', { className: 'review-tags' });
-  if (meta) tags.appendChild(h('span', { className: 'tag', style: { color: meta.color, background: meta.bg } }, meta.icon + ' ' + meta.label));
-  if (isPastDue) tags.appendChild(h('span', { className: 'tag', style: { color: '#dc2626', background: '#fef2f2' } }, '⚠ Past due'));
-  if (isStale) tags.appendChild(h('span', { className: 'tag', style: { color: '#d97706', background: '#fffbeb' } }, '🧊 Stale ×' + item.staleness));
-  tags.appendChild(h('span', { style: { fontSize: '12px', color: '#9ca3af' } }, age + 'd old'));
-  if (item.estimatedMinutes) tags.appendChild(h('span', { style: { fontSize: '12px', color: '#9ca3af' } }, '~' + item.estimatedMinutes + 'm'));
+  const card=h('div',{className:'card',style:{borderLeft:meta?'4px solid '+meta.color:undefined,background:pastDue?'#fef2f2':stale?'#fffbeb':'#fff'}});
+  const tags=h('div',{style:{display:'flex',gap:'8px',marginBottom:'12px',flexWrap:'wrap'}});
+  if(meta) tags.appendChild(h('span',{className:'tag',style:{color:meta.color,background:meta.bg}},meta.icon+' '+meta.label));
+  if(pastDue) tags.appendChild(h('span',{className:'tag',style:{color:'#dc2626',background:'#fef2f2'}},'⚠ Past due'));
+  if(stale) tags.appendChild(h('span',{className:'tag',style:{color:'#d97706',background:'#fffbeb'}},'🧊 Stale ×'+item.staleness));
+  tags.appendChild(h('span',{style:{fontSize:'12px',color:'#9ca3af'}},age+'d'));
+  if(item.estimatedMinutes) tags.appendChild(h('span',{style:{fontSize:'12px',color:'#9ca3af'}},'~'+item.estimatedMinutes+'m'));
   card.appendChild(tags);
 
-  // Title
-  card.appendChild(h('h3', { style: { fontSize: '18px', fontWeight: '600', marginBottom: '8px', lineHeight: '1.4' } }, item.text));
+  card.appendChild(h('h3',{style:{fontSize:'18px',fontWeight:'600',marginBottom:'8px',lineHeight:'1.4'}},item.text));
+  if(item.nextAction) card.appendChild(h('p',{style:{fontSize:'14px',color:'#4b5563',marginBottom:'4px'}},h('strong',null,'Next action: '),item.nextAction));
+  if(item.promisedTo) card.appendChild(h('p',{style:{fontSize:'14px',color:'#4b5563',marginBottom:'4px'}},h('strong',null,'Promised to: '),item.promisedTo));
+  if(item.deadline) card.appendChild(h('p',{style:{fontSize:'14px',color:pastDue?'#dc2626':'#4b5563'}},h('strong',null,'Deadline: '),item.deadline));
 
-  // Meta
-  if (item.nextAction) card.appendChild(h('p', { style: { fontSize: '14px', color: '#4b5563', marginBottom: '4px' } },
-    h('strong', null, 'Next action: '), item.nextAction));
-  if (item.promisedTo) card.appendChild(h('p', { style: { fontSize: '14px', color: '#4b5563', marginBottom: '4px' } },
-    h('strong', null, 'Promised to: '), item.promisedTo));
-  if (item.deadline) card.appendChild(h('p', { style: { fontSize: '14px', color: isPastDue ? '#dc2626' : '#4b5563' } },
-    h('strong', null, 'Deadline: '), item.deadline));
+  if(item.aiSuggestion) card.appendChild(h('div',{className:'ai-suggestion'},
+    h('div',{className:'ai-suggestion-label'},'AI suggestion'), h('div',{className:'ai-suggestion-text'},item.aiSuggestion),
+    h('button',{className:'btn btn-sm btn-green',onClick:()=>{updateItem(item.id,{nextAction:item.aiSuggestion});render();}},'→ Accept as next action')));
 
-  // Auto coach
-  card.appendChild(h('div', { className: 'coach-auto' }, autoCoach));
+  card.appendChild(h('div',{className:'coach-auto'},coach));
 
-  // AI coach response
-  if (state.coachMsg) {
-    card.appendChild(h('div', { className: 'coach-ai' }, state.coachMsg));
-  }
-
-  // Actions
-  const advance = () => { state.reviewIdx++; state.coachMsg = ''; render(); };
-
-  const actions = h('div', { className: 'actions' },
-    h('button', { className: 'btn btn-green', onClick: () => { closeItem(item.id, 'done'); advance(); } }, '✓ Done'),
-    h('button', { className: 'btn btn-kill', onClick: () => {
-      const reason = prompt('Why are you killing it? (This is for you, not me.)');
-      closeItem(item.id, 'killed', reason || 'No reason given');
-      advance();
-    }}, '✕ Kill'),
-    h('button', { className: 'btn btn-ghost', onClick: () => {
-      const d = prompt('When should this come back? (YYYY-MM-DD)');
-      if (d) { updateItem(item.id, { status: 'shelved', reviewDate: d, lastReviewed: isoNow(), staleness: 0 }); advance(); }
-    }}, '⏸ Shelve'),
-    h('button', { className: 'btn btn-ghost', onClick: () => {
-      updateItem(item.id, { staleness: item.staleness + 1, lastReviewed: isoNow() });
-      advance();
-    }}, '→ Skip'),
-  );
-
-  // AI button
-  const aiBtn = h('button', {
-    className: 'btn btn-coach',
-    onClick: async () => {
-      if (!settings.apiKey) {
-        state.coachMsg = 'No API key configured. Go to ⚙ Settings to add one, or just sit with the question above.';
-        render();
-        return;
-      }
-      aiBtn.textContent = 'Thinking...';
-      aiBtn.disabled = true;
-      const msg = await callAI(item, state.items);
-      state.coachMsg = msg || 'No response — but the question above still stands.';
-      render();
-    }
-  }, '🧠 Ask AI');
-  actions.appendChild(aiBtn);
-
-  // Edit button
-  actions.appendChild(h('button', {
-    className: 'btn btn-ghost', style: { fontSize: '12px', padding: '8px 12px' },
-    onClick: () => { state.editing = item.id; state.editingFrom = 'review'; render(); }
-  }, '✏ Edit'));
-
-  card.appendChild(actions);
-  wrap.appendChild(card);
-  return wrap;
+  const acts=h('div',{className:'actions'});
+  acts.appendChild(h('button',{className:'btn btn-green',onClick:()=>{closeItem(item.id,'done');adv();}},'✓ Done'));
+  acts.appendChild(h('button',{className:'btn btn-kill',onClick:()=>{const r=prompt('Why kill it?');closeItem(item.id,'killed',r||'');adv();}},'✕ Kill'));
+  acts.appendChild(h('button',{className:'btn btn-ghost',onClick:()=>{const d=prompt('Come back when? (YYYY-MM-DD)');if(d){updateItem(item.id,{status:'shelved',reviewDate:d,lastReviewed:isoNow(),staleness:0});adv();}}},'⏸ Shelve'));
+  acts.appendChild(h('button',{className:'btn btn-ghost',onClick:()=>{updateItem(item.id,{staleness:item.staleness+1,lastReviewed:isoNow()});adv();}},'→ Skip'));
+  acts.appendChild(h('button',{className:'btn btn-coach',onClick:()=>{S.chatItem=item.id;S.chatFrom='review';S.view='chat';render();}},'💬 Chat'));
+  acts.appendChild(h('button',{className:'btn btn-ghost btn-sm',onClick:()=>{S.editing=item.id;S.editingFrom='review';S.view='edit';render();}},'✏ Edit'));
+  card.appendChild(acts); w.appendChild(card); return w;
 }
 
-// ─── List View ───
-function renderList() {
-  const wrap = h('div');
+function renderChat() {
+  const item = S.items.find(i=>i.id===S.chatItem);
+  if(!item){S.view=S.chatFrom||'loops';render();return h('div');}
+  const msgs=loadChat(item.id), pad=loadPad(item.id), meta=item.category?CATEGORIES[item.category]:null;
+  const w = h('div');
 
-  const pills = h('div', { className: 'pills mb-16' });
-  const filters = ['active', 'waiting', 'shelved', 'inbox', 'all', 'closed'];
-  for (const f of filters) {
-    const count = f === 'all'
-      ? state.items.filter(i => !['done','killed'].includes(i.status)).length
-      : f === 'closed'
-      ? getClosed().length
-      : state.items.filter(i => i.status === f).length;
-    pills.appendChild(h('button', {
-      className: 'pill',
-      style: {
-        background: state.filter === f ? '#6366f1' : '#eef2ff',
-        color: state.filter === f ? '#fff' : '#6366f1',
-        borderColor: '#6366f1',
-      },
-      onClick: () => { state.filter = f; render(); }
-    }, f + ' (' + count + ')'));
-  }
-  wrap.appendChild(pills);
+  w.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'12px'}},
+    h('button',{className:'btn btn-ghost btn-sm',onClick:()=>{S.view=S.chatFrom||'loops';S.editingMsgIdx=null;render();}},'← Back'),
+    h('span',{style:{fontSize:'13px',color:meta?meta.color:'#6b7280',fontWeight:'600',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',maxWidth:'300px'}},(meta?meta.icon+' ':'')+item.text)));
 
-  const filtered = state.filter === 'all'
-    ? state.items.filter(i => !['done','killed'].includes(i.status))
-    : state.filter === 'closed'
-    ? getClosed().sort((a, b) => new Date(b.lastReviewed || b.createdAt) - new Date(a.lastReviewed || a.createdAt))
-    : state.items.filter(i => i.status === state.filter);
+  const hdr=h('div',{className:'chat-header'});
+  const ms=h('select',{className:'model-select'}); MODELS.forEach(m=>{ms.appendChild(h('option',{value:m.id},m.label+' — '+m.desc));}); ms.value=S.chatModel;
+  ms.addEventListener('change',()=>{S.chatModel=ms.value;}); hdr.appendChild(ms);
+  const ca=h('div',{style:{display:'flex',gap:'4px'}});
+  ca.appendChild(h('button',{className:'btn btn-ghost btn-sm',onClick:async()=>{
+    if(!msgs.length||!confirm('Compress into summary?'))return;
+    const sp='Summarize this coaching conversation in 2-3 sentences. Preserve decisions and action items.';
+    const r=await callAI([{role:'user',content:msgs.map(m=>m.role+': '+m.content).join('\n')}],S.chatModel,sp);
+    if(r){saveChat(item.id,[{role:'assistant',content:'[Compressed]\n'+stripSuggestion(r),id:genId()}]);render();}
+  }},'🗜 Compress'));
+  ca.appendChild(h('button',{className:'btn btn-ghost btn-sm',onClick:()=>{if(confirm('Clear conversation?')){saveChat(item.id,[]);render();}}},'🗑 Clear'));
+  hdr.appendChild(ca); w.appendChild(hdr);
 
-  if (!filtered.length) {
-    wrap.appendChild(h('p', { style: { color: '#9ca3af', textAlign: 'center', padding: '40px' } }, 'Nothing here.'));
-    return wrap;
-  }
-
-  const list = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px' } });
-  for (const item of filtered) {
-    const meta = item.category ? CATEGORIES[item.category] : null;
-    const age = daysBetween(item.createdAt, isoNow());
-    const isClosed = ['done','killed'].includes(item.status);
-
-    const el = h('div', {
-      className: 'loop-item' + (isClosed ? ' closed' : ''),
-      style: { borderLeftColor: meta ? meta.color : '#e5e7eb', cursor: isClosed ? 'default' : 'pointer' },
-      onClick: () => {
-        if (!isClosed) { state.editing = item.id; state.editingFrom = 'loops'; render(); }
-      },
-    },
-      h('div', { className: 'loop-item-row' },
-        h('div', { style: { flex: '1' } },
-          h('span', {
-            className: 'loop-item-text',
-            style: { textDecoration: isClosed ? 'line-through' : 'none' },
-          }, (meta ? meta.icon + ' ' : '') + item.text),
-          item.nextAction ? h('p', { className: 'loop-item-next' }, '→ ' + item.nextAction) : null,
-          isClosed && item.killedReason
-            ? h('p', { style: { fontSize: '12px', color: '#9ca3af', marginTop: '2px', fontStyle: 'italic' } }, 'Killed: ' + item.killedReason)
-            : null,
-        ),
-        h('div', { className: 'loop-item-meta' },
-          item.staleness > 0 && !isClosed ? h('span', { className: 'stale' }, 'stale×' + item.staleness) : null,
-          h('span', null, age + 'd'),
-          item.status === 'done' ? h('span', null, '✓') : null,
-          item.status === 'killed' ? h('span', null, '✕') : null,
-        ),
-      ),
-    );
-    list.appendChild(el);
-  }
-  wrap.appendChild(list);
-  return wrap;
-}
-
-// ─── Settings View ───
-function renderSettings() {
-  const settings = loadSettings();
-  const wrap = h('div');
-
-  wrap.appendChild(h('h2', { style: { fontSize: '20px', fontWeight: '600', marginBottom: '16px' } }, 'Settings'));
-
-  // Reminders section
-  const reminders = h('div', { className: 'settings-section' });
-  reminders.appendChild(h('h3', null, '⏰ Daily Reminder'));
-  reminders.appendChild(h('p', null, "Set this file as your browser homepage so it's always in your face. For a daily nudge that opens the file automatically, paste one of these into your terminal:"));
-
-  const filePath = window.location.href.startsWith('file://') ? window.location.href.replace('file://', '') : '~/loop-closer.html';
-
-  const macCmd = `# Mac: opens every day at 9am\n(crontab -l 2>/dev/null; echo "0 9 * * * open ${filePath}") | crontab -`;
-  const linuxCmd = `# Linux: opens every day at 9am\n(crontab -l 2>/dev/null; echo "0 9 * * * xdg-open ${filePath}") | crontab -`;
-
-  const codeBlock = h('pre', {
-    style: {
-      background: '#1e1e2e', color: '#cdd6f4', padding: '14px', borderRadius: '8px',
-      fontSize: '12px', fontFamily: "'IBM Plex Mono', monospace", overflowX: 'auto',
-      lineHeight: '1.6', marginBottom: '8px', cursor: 'pointer', position: 'relative',
-    },
-    onClick: (e) => {
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-      navigator.clipboard.writeText(isMac ? macCmd : linuxCmd);
-      e.currentTarget.querySelector('.copy-msg').textContent = 'Copied!';
-      setTimeout(() => { e.currentTarget.querySelector('.copy-msg').textContent = 'click to copy'; }, 1500);
+  const md=h('div',{className:'chat-messages'});
+  msgs.forEach((msg,idx)=>{
+    if(S.editingMsgIdx===idx){
+      const ta=h('textarea',{className:'chat-input',style:{minHeight:'60px',width:'100%',marginBottom:'8px'}});ta.value=msg.content;
+      const er=h('div'); er.appendChild(ta);
+      const after=msgs.length-idx-1;
+      er.appendChild(h('div',{style:{display:'flex',gap:'6px',justifyContent:'flex-end'}},
+        h('button',{className:'btn btn-ghost btn-sm',onClick:()=>{S.editingMsgIdx=null;render();}},'Cancel'),
+        h('button',{className:'btn btn-primary btn-sm',onClick:async()=>{
+          const nm=msgs.slice(0,idx); nm.push({...msg,content:ta.value}); saveChat(item.id,nm); S.editingMsgIdx=null; S.chatLoading=true; render();
+          const am=nm.filter(m=>m.role!=='system').map(m=>({role:m.role,content:m.content}));
+          const r=await callAI(am,S.chatModel,buildSysPrompt(item,pad)); S.chatLoading=false;
+          if(r){const sg=extractSuggestion(r),cl=stripSuggestion(r); saveChat(item.id,[...nm,{role:'assistant',content:cl,id:genId()}]); if(sg)updateItem(item.id,{aiSuggestion:sg});}
+          render();
+        }},after>0?`Save & regenerate (−${after} msg${after>1?'s':''})`:'Save & regenerate')));
+      md.appendChild(er);
+    } else {
+      const me=h('div',{className:'chat-msg '+msg.role}); me.textContent=msg.content;
+      const btns=h('div',{className:'chat-msg-actions'});
+      if(msg.role==='user') btns.appendChild(h('button',{className:'chat-msg-btn',onClick:e=>{e.stopPropagation();S.editingMsgIdx=idx;render();}},'✏'));
+      btns.appendChild(h('button',{className:'chat-msg-btn',onClick:e=>{e.stopPropagation();const a=msgs.length-idx-1;if(confirm(a>0?`Delete this + ${a} after?`:'Delete?')){saveChat(item.id,msgs.slice(0,idx));render();}}},'✕'));
+      me.appendChild(btns); md.appendChild(me);
     }
-  },
-    h('span', { className: 'copy-msg', style: { position: 'absolute', top: '6px', right: '10px', fontSize: '11px', color: '#6c7086' } }, 'click to copy'),
-    macCmd + '\n\n' + linuxCmd,
-  );
-  reminders.appendChild(codeBlock);
-  reminders.appendChild(h('p', null, "Or just set it as your browser's startup page — that's honestly the most effective option because it requires zero new habits."));
-  wrap.appendChild(reminders);
-
-  // AI section
-  const ai = h('div', { className: 'settings-section' });
-  ai.appendChild(h('h3', null, '🧠 AI Coaching (optional)'));
-  ai.appendChild(h('p', null, "Add an API key to get AI coaching during reviews. Without it, the system uses built-in coaching prompts — still useful, just not personalized. Your key is stored locally in your browser, never sent anywhere except the provider you choose."));
-
-  const provRow = h('div', { className: 'settings-row' });
-  provRow.appendChild(h('label', null, 'Provider'));
-  const provSelect = h('select', { className: 'input' });
-  provSelect.appendChild(h('option', { value: 'anthropic' }, 'Anthropic (Claude)'));
-  provSelect.appendChild(h('option', { value: 'openai' }, 'OpenAI'));
-  provSelect.value = settings.provider;
-  provRow.appendChild(provSelect);
-  ai.appendChild(provRow);
-
-  const keyRow = h('div', { className: 'settings-row' });
-  keyRow.appendChild(h('label', null, 'API Key'));
-  const keyInput = h('input', { className: 'input', type: 'password', placeholder: 'sk-...', value: settings.apiKey || '' });
-  keyRow.appendChild(keyInput);
-  ai.appendChild(keyRow);
-
-  const modelRow = h('div', { className: 'settings-row' });
-  modelRow.appendChild(h('label', null, 'Model'));
-  const modelInput = h('input', { className: 'input', type: 'text', placeholder: provSelect.value === 'anthropic' ? 'claude-sonnet-4-20250514' : 'gpt-4o' });
-  modelInput.value = settings.model || '';
-  provSelect.addEventListener('change', () => {
-    modelInput.placeholder = provSelect.value === 'anthropic' ? 'claude-sonnet-4-20250514' : 'gpt-4o';
   });
-  modelRow.appendChild(modelInput);
-  ai.appendChild(modelRow);
+  if(S.chatLoading) md.appendChild(h('div',{className:'chat-msg assistant',style:{opacity:'0.6'}},'Thinking...'));
+  w.appendChild(md);
 
-  ai.appendChild(h('button', {
-    className: 'btn btn-primary', style: { marginTop: '8px' },
-    onClick: () => {
-      saveSettings({ apiKey: keyInput.value, provider: provSelect.value, model: modelInput.value });
-      state.view = 'dump';
-      render();
-    }
-  }, 'Save'));
+  if(item.aiSuggestion) w.appendChild(h('div',{className:'ai-suggestion'},
+    h('div',{className:'ai-suggestion-label'},'Suggested next action'), h('div',{className:'ai-suggestion-text'},item.aiSuggestion),
+    h('button',{className:'btn btn-sm btn-green',onClick:()=>{updateItem(item.id,{nextAction:item.aiSuggestion});render();}},'→ Accept as next action')));
 
-  wrap.appendChild(ai);
+  const ir=h('div',{className:'chat-input-row'}), ci=h('textarea',{className:'chat-input',placeholder:'Ask for coaching, think out loud...',rows:'1'});
+  ci.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sb.click();}});
+  ci.addEventListener('input',()=>{ci.style.height='auto';ci.style.height=Math.min(ci.scrollHeight,120)+'px';}); ir.appendChild(ci);
+  const sb=h('button',{className:'btn btn-primary',style:{alignSelf:'flex-end'},onClick:async()=>{
+    const t=ci.value.trim(); if(!t||S.chatLoading)return;
+    const nm=[...loadChat(item.id),{role:'user',content:t,id:genId()}]; saveChat(item.id,nm); ci.value=''; S.chatLoading=true; render();
+    const am=nm.filter(m=>m.role!=='system').map(m=>({role:m.role,content:m.content}));
+    const r=await callAI(am,S.chatModel,buildSysPrompt(item,pad)); S.chatLoading=false;
+    if(r){const sg=extractSuggestion(r),cl=stripSuggestion(r); saveChat(item.id,[...nm,{role:'assistant',content:cl,id:genId()}]); if(sg)updateItem(item.id,{aiSuggestion:sg});}
+    else saveChat(item.id,[...nm,{role:'system',content:'Could not reach AI. Add API key in ⚙ Settings, or use inside claude.ai.',id:genId()}]);
+    render();
+  }},'→'); ir.appendChild(sb); w.appendChild(ir);
 
-  // Data section
-  const data = h('div', { className: 'settings-section' });
-  data.appendChild(h('h3', null, '💾 Data'));
-  data.appendChild(h('p', null, 'Your data lives in localStorage — on your hard drive, in this browser. It never leaves your machine (unless you add an API key, in which case individual loop details are sent to the AI provider during coaching).'));
+  // Scratchpad
+  const pe=h('div',{className:'scratchpad'}), ph=h('div',{className:'scratchpad-header'});
+  ph.appendChild(h('span',{className:'scratchpad-title'},'📝 Scratchpad'));
+  const tl=h('label',{className:'scratchpad-toggle'}), tc=h('input',{type:'checkbox'});
+  tc.checked=pad.visible; tc.addEventListener('change',()=>{const p=loadPad(item.id);p.visible=tc.checked;savePad(item.id,p);}); tc.addEventListener('click',e=>e.stopPropagation());
+  tl.appendChild(tc); tl.appendChild(document.createTextNode('AI can see')); tl.addEventListener('click',e=>e.stopPropagation()); ph.appendChild(tl); pe.appendChild(ph);
+  const pb=h('div',{className:'scratchpad-body',style:{display:pad.text?'block':'none'}});
+  const pt=h('textarea',{className:'scratchpad-ta',placeholder:"Alt ideas, notes, things you don't want AI to see..."}); pt.value=pad.text;
+  pt.addEventListener('input',()=>{const p=loadPad(item.id);p.text=pt.value;savePad(item.id,p);}); pb.appendChild(pt); pe.appendChild(pb);
+  ph.addEventListener('click',()=>{pb.style.display=pb.style.display==='none'?'block':'none';}); w.appendChild(pe);
 
-  data.appendChild(h('button', {
-    className: 'btn btn-ghost', style: { marginRight: '8px' },
-    onClick: () => {
-      // Show selective export modal
-      state.view = 'export';
-      state.editing = null;
-      render();
-    }
-  }, '📦 Export'));
-
-  data.appendChild(h('button', {
-    className: 'btn btn-ghost',
-    onClick: () => {
-      const input = document.createElement('input');
-      input.type = 'file'; input.accept = '.json';
-      input.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          try {
-            const data = JSON.parse(ev.target.result);
-            const incoming = data.items || [];
-            // Merge: add items with new IDs that don't exist, update ones that do
-            const existingIds = new Set(state.items.map(i => i.id));
-            let added = 0, updated = 0;
-            for (const item of incoming) {
-              if (existingIds.has(item.id)) {
-                state.items = state.items.map(i => i.id === item.id ? { ...i, ...item } : i);
-                updated++;
-              } else {
-                state.items.push(item);
-                added++;
-              }
-            }
-            saveItems(state.items);
-            if (data.stats) { state.stats = data.stats; saveStats(state.stats); }
-            alert(`Imported: ${added} new, ${updated} updated.`);
-            render();
-          } catch { alert('Invalid backup file.'); }
-        };
-        reader.readAsText(file);
-      });
-      input.click();
-    }
-  }, '📂 Import'));
-  wrap.appendChild(data);
-
-  // Danger zone
-  const danger = h('div', { className: 'danger-zone' });
-  danger.appendChild(h('h3', null, '⚠ Danger Zone'));
-  danger.appendChild(h('button', {
-    className: 'btn btn-kill', style: { marginTop: '8px' },
-    onClick: () => {
-      if (confirm('This will delete ALL your loops and stats. Are you sure?')) {
-        state.items = []; state.stats = { opened: 0, closed: 0 };
-        saveItems([]); saveStats(state.stats);
-        state.view = 'dump';
-        render();
-      }
-    }
-  }, 'Delete All Data'));
-  wrap.appendChild(danger);
-
-  // Back
-  wrap.appendChild(h('button', {
-    className: 'btn btn-ghost', style: { marginTop: '20px' },
-    onClick: () => { state.view = 'dump'; render(); }
-  }, '← Back'));
-
-  return wrap;
+  requestAnimationFrame(()=>{md.scrollTop=md.scrollHeight;});
+  return w;
 }
 
-// Boot
+function renderEdit() {
+  const item=S.items.find(i=>i.id===S.editing);
+  if(!item){S.editing=null;S.view='loops';render();return h('div');}
+  let cat=item.category, status=item.status;
+  const c=h('div',{className:'card'}), goBack=()=>{S.editing=null;if(S.editingFrom==='review')S.view='review';else S.view='loops';S.editingFrom=null;render();};
+
+  c.appendChild(h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:'16px'}},
+    h('span',{style:{fontSize:'12px',color:'#9ca3af'}},'Editing · '+daysBetween(item.createdAt,isoNow())+'d old'),
+    h('button',{className:'btn btn-ghost btn-sm',onClick:goBack},'← Back')));
+
+  c.appendChild(h('label',{className:'label'},'Loop'));
+  const ti=h('input',{className:'input input-full',type:'text',value:item.text,style:{marginBottom:'16px'}}); c.appendChild(ti);
+
+  c.appendChild(h('label',{className:'label'},'Category'));
+  const pd=h('div',{className:'pills',style:{marginBottom:'16px'}});
+  for(const[k,m]of Object.entries(CATEGORIES)){const p=h('button',{className:'pill',style:{background:cat===k?m.color:m.bg,color:cat===k?'#fff':m.color,borderColor:m.color},onClick:()=>{cat=k;pd.querySelectorAll('.pill').forEach(p=>{const k2=p.dataset.key,m2=CATEGORIES[k2];p.style.background=k2===k?m2.color:m2.bg;p.style.color=k2===k?'#fff':m2.color;});}},m.icon+' '+m.label);p.dataset.key=k;pd.appendChild(p);}
+  c.appendChild(pd);
+
+  c.appendChild(h('label',{className:'label'},'Status'));
+  const sd=h('div',{className:'pills',style:{marginBottom:'16px'}});
+  ['active','waiting','shelved','inbox'].forEach(s=>{const p=h('button',{className:'pill',style:{background:status===s?'#6366f1':'#eef2ff',color:status===s?'#fff':'#6366f1',borderColor:'#6366f1'},onClick:()=>{status=s;sd.querySelectorAll('.pill').forEach(p=>{const k=p.dataset.key;p.style.background=k===s?'#6366f1':'#eef2ff';p.style.color=k===s?'#fff':'#6366f1';});}},s);p.dataset.key=s;sd.appendChild(p);});
+  c.appendChild(sd);
+
+  c.appendChild(h('label',{className:'label'},'Next action'));
+  const ni=h('input',{className:'input input-full',type:'text',value:item.nextAction||'',style:{marginBottom:'16px'}}); c.appendChild(ni);
+  c.appendChild(h('label',{className:'label'},'Estimated minutes'));
+  const ei=h('input',{className:'input',type:'number',value:item.estimatedMinutes||'',style:{width:'120px',marginBottom:'16px'}}); c.appendChild(ei);
+
+  const r1=h('div',{className:'flex-row',style:{marginBottom:'16px'}}),
+    di=h('input',{className:'input input-full',type:'date',value:item.deadline||''}),
+    pi=h('input',{className:'input input-full',type:'text',value:item.promisedTo||''});
+  r1.appendChild(h('div',null,h('label',{className:'label'},'Deadline'),di));
+  r1.appendChild(h('div',null,h('label',{className:'label'},'Promised to'),pi)); c.appendChild(r1);
+
+  const r2=h('div',{className:'flex-row',style:{marginBottom:'16px'}}),
+    wi=h('input',{className:'input input-full',type:'text',value:item.waitingOn||''}),
+    ri=h('input',{className:'input input-full',type:'date',value:item.reviewDate||''});
+  r2.appendChild(h('div',null,h('label',{className:'label'},'Waiting on'),wi));
+  r2.appendChild(h('div',null,h('label',{className:'label'},'Review date'),ri)); c.appendChild(r2);
+
+  const acts=h('div',{style:{display:'flex',gap:'8px',flexWrap:'wrap'}});
+  acts.appendChild(h('button',{className:'btn btn-primary',onClick:()=>{updateItem(item.id,{text:ti.value,category:cat,status,nextAction:ni.value,estimatedMinutes:ei.value?+ei.value:null,deadline:di.value,promisedTo:pi.value,externalCommitment:!!pi.value,waitingOn:wi.value,reviewDate:ri.value,lastReviewed:isoNow()});goBack();}},'Save'));
+  acts.appendChild(h('button',{className:'btn btn-green',onClick:()=>{closeItem(item.id,'done');if(S.editingFrom==='review'){S.reviewIdx++;}goBack();}},'✓ Done'));
+  acts.appendChild(h('button',{className:'btn btn-kill',onClick:()=>{const r=prompt('Why?');closeItem(item.id,'killed',r||'');if(S.editingFrom==='review'){S.reviewIdx++;}goBack();}},'✕ Kill'));
+  acts.appendChild(h('button',{className:'btn btn-coach',onClick:()=>{S.chatItem=item.id;S.chatFrom='edit';S.view='chat';render();}},'💬 Chat'));
+  acts.appendChild(h('button',{className:'btn btn-ghost',style:{marginLeft:'auto'},onClick:()=>{if(confirm('Permanently delete?')){S.items=S.items.filter(i=>i.id!==item.id);saveItems(S.items);if(S.editingFrom==='review')S.reviewIdx++;goBack();}}},'🗑'));
+  c.appendChild(acts); return c;
+}
+
+function renderList() {
+  const w=h('div'), pills=h('div',{className:'pills',style:{marginBottom:'16px'}});
+  ['active','waiting','shelved','inbox','all','closed'].forEach(f=>{
+    const n=f==='all'?S.items.filter(i=>!['done','killed'].includes(i.status)).length:f==='closed'?getClosed().length:S.items.filter(i=>i.status===f).length;
+    pills.appendChild(h('button',{className:'pill',style:{background:S.filter===f?'#6366f1':'#eef2ff',color:S.filter===f?'#fff':'#6366f1',borderColor:'#6366f1'},onClick:()=>{S.filter=f;render();}},f+' ('+n+')'));
+  }); w.appendChild(pills);
+
+  const fl=S.filter==='all'?S.items.filter(i=>!['done','killed'].includes(i.status)):S.filter==='closed'?getClosed().sort((a,b)=>new Date(b.lastReviewed||b.createdAt)-new Date(a.lastReviewed||a.createdAt)):S.items.filter(i=>i.status===S.filter);
+  if(!fl.length){w.appendChild(h('p',{style:{color:'#9ca3af',textAlign:'center',padding:'40px'}},'Nothing here.'));return w;}
+
+  const list=h('div',{style:{display:'flex',flexDirection:'column',gap:'8px'}});
+  fl.forEach(item=>{const meta=item.category?CATEGORIES[item.category]:null,age=daysBetween(item.createdAt,isoNow()),cl=['done','killed'].includes(item.status);
+    list.appendChild(h('div',{className:'loop-item'+(cl?' closed':''),style:{borderLeftColor:meta?meta.color:'#e5e7eb'},onClick:()=>{if(!cl){S.editing=item.id;S.editingFrom='loops';S.view='edit';render();}}},
+      h('div',{className:'loop-item-row'},
+        h('div',{style:{flex:'1'}},
+          h('span',{className:'loop-item-text',style:{textDecoration:cl?'line-through':'none'}},(meta?meta.icon+' ':'')+item.text),
+          item.nextAction?h('p',{className:'loop-item-next'},'→ '+item.nextAction):null,
+          cl&&item.killedReason?h('p',{style:{fontSize:'12px',color:'#9ca3af',marginTop:'2px',fontStyle:'italic'}},'Killed: '+item.killedReason):null),
+        h('div',{className:'loop-item-meta'},
+          item.staleness>0&&!cl?h('span',{className:'stale'},'stale×'+item.staleness):null,
+          h('span',null,age+'d'), cl?h('span',null,item.status==='done'?'✓':'✕'):null))));
+  }); w.appendChild(list); return w;
+}
+
+function renderExport() {
+  const w=h('div');
+  w.appendChild(h('h2',{style:{fontSize:'20px',fontWeight:'600',marginBottom:'4px'}},'Export for Review'));
+  w.appendChild(h('p',{style:{color:'#6b7280',fontSize:'14px',marginBottom:'16px'}},'Select loops to export. Paste into Claude or any LLM.'));
+
+  const open=S.items.filter(i=>!['done','killed'].includes(i.status)), sel=new Set(), ld=h('div',{style:{marginBottom:'16px'}});
+  open.forEach(item=>{const meta=item.category?CATEGORIES[item.category]:null,cb=h('input',{type:'checkbox'});
+    cb.addEventListener('change',()=>{if(cb.checked)sel.add(item.id);else sel.delete(item.id);});
+    ld.appendChild(h('div',{className:'export-item'},cb,h('label',null,(meta?meta.icon+' ':'')+item.text,
+      item.deadline?h('span',{className:'tag',style:{color:'#d97706',background:'#fffbeb',marginLeft:'8px'}},'📅 '+item.deadline):null)));
+  }); w.appendChild(ld);
+
+  w.appendChild(h('div',{style:{display:'flex',gap:'8px',marginBottom:'16px'}},
+    h('button',{className:'btn btn-ghost btn-sm',onClick:()=>{ld.querySelectorAll('input').forEach(c=>{c.checked=true;});open.forEach(i=>sel.add(i.id));}},'Select all'),
+    h('button',{className:'btn btn-ghost btn-sm',onClick:()=>{ld.querySelectorAll('input').forEach(c=>{c.checked=false;});sel.clear();}},'Clear')));
+
+  const ta=h('textarea',{className:'textarea',style:{minHeight:'150px',fontSize:'13px'},readOnly:true,placeholder:'Click Export to generate...'});
+  w.appendChild(ta);
+  w.appendChild(h('div',{style:{display:'flex',gap:'8px',marginTop:'12px'}},
+    h('button',{className:'btn btn-primary',onClick:()=>{
+      const items=S.items.filter(i=>sel.has(i.id));
+      if(!items.length){ta.value='No loops selected.';return;}
+      let o=`I have ${items.length} open loops. For each, tell me: do it, defer (with trigger), delegate, or kill? Be direct.\n\n`;
+      items.forEach((item,idx)=>{const meta=item.category?CATEGORIES[item.category]:null,age=daysBetween(item.createdAt,isoNow());
+        o+=`--- ${idx+1}. ${item.text} ---\n`;
+        o+=`${meta?meta.label:'?'} | ${age}d old | Staleness: ${item.staleness}\n`;
+        if(item.nextAction)o+=`Next: ${item.nextAction}\n`;
+        if(item.estimatedMinutes)o+=`Est: ${item.estimatedMinutes}m\n`;
+        if(item.deadline)o+=`Deadline: ${item.deadline}\n`;
+        if(item.promisedTo)o+=`Promised to: ${item.promisedTo}\n`;
+        if(item.waitingOn)o+=`Waiting on: ${item.waitingOn}\n`;
+        const ch=loadChat(item.id); if(ch.length)o+=`Chat: ${ch.length} messages\n`;
+        const pad=loadPad(item.id); if(pad.text.trim())o+=`Notes: ${pad.text.trim()}\n`;
+        o+='\n';
+      }); ta.value=o;
+    }},'Export'),
+    h('button',{className:'btn btn-ghost',onClick:()=>{navigator.clipboard.writeText(ta.value);}},'📋 Copy')));
+
+  w.appendChild(h('div',{style:{marginTop:'24px',paddingTop:'16px',borderTop:'1px solid #e5e7eb'}},
+    h('p',{style:{fontSize:'13px',color:'#9ca3af',marginBottom:'8px'}},'Full JSON backup (includes chats & scratchpads):'),
+    h('div',{style:{display:'flex',gap:'8px'}},
+      h('button',{className:'btn btn-ghost btn-sm',onClick:()=>{
+        const d={items:S.items,stats:S.stats}; S.items.forEach(i=>{d['chat-'+i.id]=loadChat(i.id);d['pad-'+i.id]=loadPad(i.id);});
+        const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');
+        a.href=u;a.download='loop-closer-'+todayStr()+'.json';a.click();URL.revokeObjectURL(u);
+      }},'📦 Export JSON'),
+      h('button',{className:'btn btn-ghost btn-sm',onClick:()=>{
+        const i=document.createElement('input');i.type='file';i.accept='.json';
+        i.addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();
+          r.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.items){S.items=d.items;saveItems(S.items);}if(d.stats){S.stats=d.stats;saveStats(S.stats);}
+            Object.keys(d).forEach(k=>{if(k.startsWith('chat-')||k.startsWith('pad-'))lsSet(k,d[k]);});render();}catch{alert('Invalid file.');}};
+          r.readAsText(f);});i.click();
+      }},'📂 Import JSON'))));
+  return w;
+}
+
+function renderSettings() {
+  const st=loadSettings(), w=h('div');
+  w.appendChild(h('h2',{style:{fontSize:'20px',fontWeight:'600',marginBottom:'16px'}},'Settings'));
+
+  const rem=h('div',{className:'settings-section'});
+  rem.appendChild(h('h3',null,'⏰ Daily Reminder'));
+  rem.appendChild(h('p',null,"Set as browser homepage. Or use a cron job:"));
+  const fp=window.location.href.startsWith('file://')?window.location.href.replace('file://',''):'~/loop-closer.html';
+  rem.appendChild(h('pre',{style:{background:'#1e1e2e',color:'#cdd6f4',padding:'14px',borderRadius:'8px',fontSize:'12px',fontFamily:"'IBM Plex Mono', monospace",overflowX:'auto',lineHeight:'1.6',cursor:'pointer',position:'relative'},onClick:e=>{
+    const mac=navigator.platform.toUpperCase().indexOf('MAC')>=0;navigator.clipboard.writeText(mac?`(crontab -l 2>/dev/null; echo "0 9 * * * open ${fp}") | crontab -`:`(crontab -l 2>/dev/null; echo "0 9 * * * xdg-open ${fp}") | crontab -`);
+    e.currentTarget.querySelector('.cp').textContent='Copied!';setTimeout(()=>e.currentTarget.querySelector('.cp').textContent='click to copy',1500);
+  }},h('span',{className:'cp',style:{position:'absolute',top:'6px',right:'10px',fontSize:'11px',color:'#6c7086'}},'click to copy'),
+    `# Mac\n(crontab -l 2>/dev/null; echo "0 9 * * * open ${fp}") | crontab -\n\n# Linux\n(crontab -l 2>/dev/null; echo "0 9 * * * xdg-open ${fp}") | crontab -`));
+  w.appendChild(rem);
+
+  const ai=h('div',{className:'settings-section'});
+  ai.appendChild(h('h3',null,'🧠 AI (optional for local use)'));
+  ai.appendChild(h('p',null,"In claude.ai artifacts, AI works free. Locally, add an API key. Stored in localStorage only."));
+  const pr=h('div',{className:'settings-row'}),ps=h('select',{className:'input'});
+  ps.appendChild(h('option',{value:'anthropic'},'Anthropic'));ps.appendChild(h('option',{value:'openai'},'OpenAI'));ps.value=st.provider;
+  pr.appendChild(h('label',null,'Provider'));pr.appendChild(ps);ai.appendChild(pr);
+  const kr=h('div',{className:'settings-row'}),ki=h('input',{className:'input',type:'password',placeholder:'sk-...',value:st.apiKey||''});
+  kr.appendChild(h('label',null,'API Key'));kr.appendChild(ki);ai.appendChild(kr);
+  const mr=h('div',{className:'settings-row'}),msel=h('select',{className:'input'});
+  MODELS.forEach(m=>msel.appendChild(h('option',{value:m.id},m.label)));msel.value=st.model||MODELS[0].id;
+  mr.appendChild(h('label',null,'Default'));mr.appendChild(msel);ai.appendChild(mr);
+  ai.appendChild(h('button',{className:'btn btn-primary',style:{marginTop:'8px'},onClick:()=>{saveSettings({apiKey:ki.value,provider:ps.value,model:msel.value});S.chatModel=msel.value;S.view='dump';render();}},'Save'));
+  w.appendChild(ai);
+
+  const dz=h('div',{className:'danger-zone'});
+  dz.appendChild(h('h3',null,'⚠ Danger Zone'));
+  dz.appendChild(h('button',{className:'btn btn-kill',style:{marginTop:'8px'},onClick:()=>{
+    if(confirm('Delete ALL data?')){Object.keys(localStorage).filter(k=>k.startsWith('loop-closer-')).forEach(k=>localStorage.removeItem(k));S.items=[];S.stats={opened:0,closed:0};S.view='dump';render();}
+  }},'Delete All Data'));
+  w.appendChild(dz);
+  w.appendChild(h('button',{className:'btn btn-ghost',style:{marginTop:'20px'},onClick:()=>{S.view='dump';render();}},'← Back'));
+  return w;
+}
+
 render();
 </script>
 </body>
