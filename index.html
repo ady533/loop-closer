@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -507,6 +507,7 @@ function render() {
 
   // Views
   if (state.editing) app.appendChild(renderEdit());
+  else if (state.view === 'export') app.appendChild(renderExport());
   else if (state.view === 'dump') app.appendChild(renderDump());
   else if (state.view === 'process') app.appendChild(renderProcess());
   else if (state.view === 'review') app.appendChild(renderReview());
@@ -711,6 +712,127 @@ function renderCapBar(activeCount) {
       h('div', { className: 'cap-fill', style: { width: Math.min(ratio * 100, 100) + '%', background: color } }),
     ),
   );
+}
+
+// ─── Export View ───
+function renderExport() {
+  const wrap = h('div');
+  const card = h('div', { className: 'card' });
+
+  card.appendChild(h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' } },
+    h('h2', { style: { fontSize: '20px', fontWeight: '600' } }, 'Select items to export'),
+    h('button', { className: 'btn btn-ghost', style: { fontSize: '12px', padding: '4px 12px' }, onClick: () => { state.view = 'settings'; render(); } }, '← Back'),
+  ));
+
+  card.appendChild(h('p', { style: { fontSize: '13px', color: '#6b7280', marginBottom: '16px' } },
+    'Pick which loops to include. Use this to share non-sensitive items with Claude for review, or to back up selectively.'
+  ));
+
+  const selected = new Set();
+  const openItems = state.items.filter(i => !['done', 'killed'].includes(i.status));
+
+  // Select all / none
+  const controlRow = h('div', { style: { display: 'flex', gap: '8px', marginBottom: '12px' } });
+  controlRow.appendChild(h('button', {
+    className: 'btn btn-ghost', style: { fontSize: '12px', padding: '4px 12px' },
+    onClick: () => {
+      const checkboxes = card.querySelectorAll('.export-cb');
+      checkboxes.forEach(cb => { cb.checked = true; selected.add(cb.dataset.id); });
+      countLabel.textContent = selected.size + ' selected';
+    }
+  }, 'Select all'));
+  controlRow.appendChild(h('button', {
+    className: 'btn btn-ghost', style: { fontSize: '12px', padding: '4px 12px' },
+    onClick: () => {
+      const checkboxes = card.querySelectorAll('.export-cb');
+      checkboxes.forEach(cb => { cb.checked = false; });
+      selected.clear();
+      countLabel.textContent = '0 selected';
+    }
+  }, 'Select none'));
+  const countLabel = h('span', { style: { fontSize: '12px', color: '#9ca3af', marginLeft: 'auto', alignSelf: 'center' } }, '0 selected');
+  controlRow.appendChild(countLabel);
+  card.appendChild(controlRow);
+
+  // Item list with checkboxes
+  const list = h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '400px', overflowY: 'auto', marginBottom: '16px' } });
+  for (const item of openItems) {
+    const meta = item.category ? CATEGORIES[item.category] : null;
+    const row = h('label', {
+      style: {
+        display: 'flex', gap: '10px', alignItems: 'center', padding: '8px 10px',
+        background: '#f9fafb', borderRadius: '6px', cursor: 'pointer', fontSize: '14px',
+        borderLeft: meta ? '3px solid ' + meta.color : '3px solid #e5e7eb',
+      }
+    });
+    const cb = h('input', { type: 'checkbox', className: 'export-cb', style: { flexShrink: '0' } });
+    cb.dataset.id = item.id;
+    cb.addEventListener('change', () => {
+      if (cb.checked) selected.add(item.id);
+      else selected.delete(item.id);
+      countLabel.textContent = selected.size + ' selected';
+    });
+    row.appendChild(cb);
+    row.appendChild(h('span', null, (meta ? meta.icon + ' ' : '') + item.text));
+    if (item.staleness > 0) row.appendChild(h('span', { style: { fontSize: '11px', color: '#d97706', marginLeft: 'auto', flexShrink: '0' } }, 'stale×' + item.staleness));
+    list.appendChild(row);
+  }
+  // Also show closed items in a collapsed section
+  const closedItems = state.items.filter(i => ['done', 'killed'].includes(i.status));
+  if (closedItems.length) {
+    const toggle = h('button', {
+      className: 'btn btn-ghost', style: { fontSize: '12px', padding: '4px 12px', marginTop: '8px', marginBottom: '4px' },
+      onClick: () => {
+        closedList.style.display = closedList.style.display === 'none' ? 'flex' : 'none';
+        toggle.textContent = closedList.style.display === 'none' ? 'Show ' + closedItems.length + ' closed' : 'Hide closed';
+      }
+    }, 'Show ' + closedItems.length + ' closed');
+    list.appendChild(toggle);
+    const closedList = h('div', { style: { display: 'none', flexDirection: 'column', gap: '6px' } });
+    for (const item of closedItems) {
+      const row = h('label', {
+        style: { display: 'flex', gap: '10px', alignItems: 'center', padding: '8px 10px', background: '#f3f4f6', borderRadius: '6px', cursor: 'pointer', fontSize: '14px', opacity: '0.6' }
+      });
+      const cb = h('input', { type: 'checkbox', className: 'export-cb', style: { flexShrink: '0' } });
+      cb.dataset.id = item.id;
+      cb.addEventListener('change', () => {
+        if (cb.checked) selected.add(item.id);
+        else selected.delete(item.id);
+        countLabel.textContent = selected.size + ' selected';
+      });
+      row.appendChild(cb);
+      row.appendChild(h('span', { style: { textDecoration: 'line-through' } }, (item.status === 'killed' ? '✕ ' : '✓ ') + item.text));
+      closedList.appendChild(row);
+    }
+    list.appendChild(closedList);
+  }
+  card.appendChild(list);
+
+  // Include stats checkbox
+  const statsRow = h('label', { style: { display: 'flex', gap: '10px', alignItems: 'center', fontSize: '13px', color: '#6b7280', marginBottom: '16px' } });
+  const statsCb = h('input', { type: 'checkbox', checked: true });
+  statsRow.appendChild(statsCb);
+  statsRow.appendChild(h('span', null, 'Include stats (opened/closed counts)'));
+  card.appendChild(statsRow);
+
+  // Export button
+  card.appendChild(h('button', {
+    className: 'btn btn-primary btn-full',
+    onClick: () => {
+      if (selected.size === 0) { alert('Select at least one item.'); return; }
+      const exportItems = state.items.filter(i => selected.has(i.id));
+      const payload = { format: 'loop-closer-v1', exportedAt: isoNow(), items: exportItems };
+      if (statsCb.checked) payload.stats = state.stats;
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'loops-' + todayStr() + '.json';
+      a.click(); URL.revokeObjectURL(url);
+    }
+  }, 'Export ' + '→'));
+
+  wrap.appendChild(card);
+  return wrap;
 }
 
 // ─── Dump View ───
@@ -1152,13 +1274,12 @@ function renderSettings() {
   data.appendChild(h('button', {
     className: 'btn btn-ghost', style: { marginRight: '8px' },
     onClick: () => {
-      const blob = new Blob([JSON.stringify({ items: state.items, stats: state.stats }, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'loop-closer-backup-' + todayStr() + '.json';
-      a.click(); URL.revokeObjectURL(url);
+      // Show selective export modal
+      state.view = 'export';
+      state.editing = null;
+      render();
     }
-  }, '📦 Export Backup'));
+  }, '📦 Export'));
 
   data.appendChild(h('button', {
     className: 'btn btn-ghost',
@@ -1172,8 +1293,22 @@ function renderSettings() {
         reader.onload = (ev) => {
           try {
             const data = JSON.parse(ev.target.result);
-            if (data.items) { state.items = data.items; saveItems(state.items); }
+            const incoming = data.items || [];
+            // Merge: add items with new IDs that don't exist, update ones that do
+            const existingIds = new Set(state.items.map(i => i.id));
+            let added = 0, updated = 0;
+            for (const item of incoming) {
+              if (existingIds.has(item.id)) {
+                state.items = state.items.map(i => i.id === item.id ? { ...i, ...item } : i);
+                updated++;
+              } else {
+                state.items.push(item);
+                added++;
+              }
+            }
+            saveItems(state.items);
             if (data.stats) { state.stats = data.stats; saveStats(state.stats); }
+            alert(`Imported: ${added} new, ${updated} updated.`);
             render();
           } catch { alert('Invalid backup file.'); }
         };
@@ -1181,7 +1316,7 @@ function renderSettings() {
       });
       input.click();
     }
-  }, '📂 Import Backup'));
+  }, '📂 Import'));
   wrap.appendChild(data);
 
   // Danger zone
